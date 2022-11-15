@@ -12,10 +12,10 @@ async function main () {
 			}
 			return res.blob()
 		})
-
 	const file = new File([blob], 'madragora.mp3', { type: 'audio/mpeg' })
 	const musicAnalyzer = new MusicAnalyzer(file)
-	document.body.addEventListener('click', () => { musicAnalyzer.play() }, true);
+
+	document.body.addEventListener('click', () => { musicAnalyzer.play() }, true)
 
 	const scene = new THREE.Scene()
 	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
