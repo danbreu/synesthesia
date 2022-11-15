@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "build": "browserify ./src/app.js -o ./public/bundle.js"
+    "build": "browserify ./src/app.js -o ./public/bundle.js",
+    "fix-style": "npx eslint \"**/*.js\" --fix"
   },
   "dependencies": {
     "av": "^0.4.9",
@@ -17,6 +18,16 @@
     "three": "^0.146.0"
   },
   "devDependencies": {
-    "browserify": "^17.0.0"
-  }
+    "browserify": "^17.0.0",
+    "eslint": "^8.27.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-n": "^15.5.1",
+    "eslint-plugin-promise": "^6.1.1"
+  },
+  "eslintIgnore": [
+    "node_modules",
+    "bundle.js",
+    "*.min.js"
+  ]
 }
