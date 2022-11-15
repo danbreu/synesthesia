@@ -4,7 +4,8 @@
   "description": "3D-Audio Visualizer with Three.js",
   "main": "index.js",
   "scripts": {
-    "build": "browserify index.js -o ../static/bundle.js"
+    "build": "browserify index.js -o ../static/bundle.js",
+    "fix-style": "npx eslint \"**/*.js\" --fix"
   },
   "contributors": [
     "Daniel Breuer",
@@ -19,6 +20,14 @@
     "three": "^0.146.0"
   },
   "devDependencies": {
-    "browserify": "^17.0.0"
-  }
+    "browserify": "^17.0.0",
+    "eslint": "^8.27.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-n": "^15.5.1",
+    "eslint-plugin-promise": "^6.1.1"
+  },
+  "eslintIgnore": [
+    "node_modules"
+  ]
 }
