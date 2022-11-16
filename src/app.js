@@ -34,7 +34,7 @@ async function main () {
 	/**
 	 * Resize canvas and update projection matrix if the window size changed.
 	 */
-	function resizeCanvasToWindowSize () {
+	const resizeCanvasToWindowSize = () => {
 		const canvas = renderer.domElement
 
 		if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
@@ -44,7 +44,7 @@ async function main () {
 		}
 	}
 
-	function animate () {
+	const animate = () => {
 		resizeCanvasToWindowSize()
 		requestAnimationFrame(animate)
 
