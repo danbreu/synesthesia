@@ -44307,10 +44307,10 @@ async function main () {
 			}
 			return res.blob()
 		})
-
 	const file = new File([blob], 'madragora.mp3', { type: 'audio/mpeg' })
 	const musicAnalyzer = new MusicAnalyzer(file)
-	document.body.addEventListener('click', () => { musicAnalyzer.play() }, true);
+
+	document.body.addEventListener('click', () => { musicAnalyzer.play() }, true)
 
 	const scene = new THREE.Scene()
 	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
@@ -44326,14 +44326,28 @@ async function main () {
 
 	camera.position.z = 5
 
+	/**
+	 * Resize canvas and update projection matrix if the window size changed.
+	 */
+	function resizeCanvasToWindowSize () {
+		const canvas = renderer.domElement
+
+		if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+			renderer.setSize(window.innerWidth, window.innerHeight)
+			camera.aspect = window.innerWidth / window.innerHeight
+			camera.updateProjectionMatrix()
+		}
+	}
+
 	function animate () {
+		resizeCanvasToWindowSize()
 		requestAnimationFrame(animate)
 
 		cube.rotation.x += 0.01
 		cube.rotation.y += 0.01
 
 		renderer.render(scene, camera)
-	};
+	}
 
 	animate()
 }

@@ -31,14 +31,28 @@ async function main () {
 
 	camera.position.z = 5
 
+	/**
+	 * Resize canvas and update projection matrix if the window size changed.
+	 */
+	function resizeCanvasToWindowSize () {
+		const canvas = renderer.domElement
+
+		if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+			renderer.setSize(window.innerWidth, window.innerHeight)
+			camera.aspect = window.innerWidth / window.innerHeight
+			camera.updateProjectionMatrix()
+		}
+	}
+
 	function animate () {
+		resizeCanvasToWindowSize()
 		requestAnimationFrame(animate)
 
 		cube.rotation.x += 0.01
 		cube.rotation.y += 0.01
 
 		renderer.render(scene, camera)
-	};
+	}
 
 	animate()
 }
