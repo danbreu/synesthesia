@@ -5,7 +5,6 @@
  */
 
 const server = require('../server')
-const debug = require('debug')('synesthesia:server')
 const http = require('http')
 
 /**
@@ -84,7 +83,7 @@ function onError (error) {
 function onListening () {
 	const addr = httpServer.address()
 	const bind = typeof addr === 'string'
-		? 'pipe ' + addr
-		: 'port ' + addr.port
-	debug('Listening on ' + bind)
+		? addr
+		: addr.port
+	console.log(`Listening on http://127.0.0.1:${bind}`)
 }

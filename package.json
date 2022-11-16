@@ -11,8 +11,6 @@
   },
   "dependencies": {
     "av": "^0.4.9",
-    "cookie-parser": "~1.4.4",
-    "debug": "~2.6.9",
     "express": "~4.16.1",
     "fft.js": "^4.0.4",
     "morgan": "~1.9.1",
