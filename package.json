@@ -6,7 +6,8 @@
     "start": "node ./bin/www",
     "build": "browserify ./src/app.js -o ./public/bundle.js",
     "lint": "npx eslint \"**/*.js\"",
-    "lint-fix": "npx eslint \"**/*.js\" --fix"
+    "lint-fix": "npx eslint \"**/*.js\" --fix",
+    "minify": "npx uglifyjs public/bundle.js > public/min.tmp; mv public/min.tmp public/bundle.js"
   },
   "dependencies": {
     "av": "^0.4.9",
@@ -24,7 +25,8 @@
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-n": "^15.5.1",
-    "eslint-plugin-promise": "^6.1.1"
+    "eslint-plugin-promise": "^6.1.1",
+    "uglify-js": "^3.17.4"
   },
   "eslintIgnore": [
     "node_modules",
