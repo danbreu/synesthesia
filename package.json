@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "build": "browserify ./src/app.js -o ./public/bundle.js",
+    "bundle": "browserify ./src/app.js -o ./public/bundle.js",
     "lint": "npx eslint \"**/*.js\"",
     "lint-fix": "npx eslint \"**/*.js\" --fix",
     "minify": "npx uglifyjs public/bundle.js > public/min.tmp; mv public/min.tmp public/bundle.js"
