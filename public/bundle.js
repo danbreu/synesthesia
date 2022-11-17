@@ -44308,14 +44308,18 @@ async function main () {
 			return res.blob()
 		})
 	const file = new File([blob], 'madragora.mp3', { type: 'audio/mpeg' })
-	const musicAnalyzer = new MusicAnalyzer(file)
+	const ready = (buffer) => {
+		console.log('Decoding complete.')
+		console.log(buffer)
+	}
+	const musicAnalyzer = new MusicAnalyzer(file, ready)
 
-	document.body.addEventListener('click', () => { musicAnalyzer.play() }, true)
+	musicAnalyzer.startDecoding()
 
 	const scene = new THREE.Scene()
 	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
 
-	const renderer = new THREE.WebGLRenderer({antialias: true})
+	const renderer = new THREE.WebGLRenderer({ antialias: true })
 	renderer.setSize(window.innerWidth, window.innerHeight)
 	document.body.appendChild(renderer.domElement)
 
@@ -44329,7 +44333,7 @@ async function main () {
 	/**
 	 * Resize canvas and update projection matrix if the window size changed.
 	 */
-	function resizeCanvasToWindowSize () {
+	const resizeCanvasToWindowSize = () => {
 		const canvas = renderer.domElement
 
 		if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
@@ -44339,7 +44343,7 @@ async function main () {
 		}
 	}
 
-	function animate () {
+	const animate = () => {
 		resizeCanvasToWindowSize()
 		requestAnimationFrame(animate)
 
@@ -44365,17 +44369,51 @@ module.exports = class MusicAnalyzer {
 	/**
 	 * Create a MusicAnalyzer object for given audio file.
 	 * @param {File} musicFile A file object of a MP3 music file.
+	 * @param {(buffer: Float32Array) => any} decodingDoneCallback Callback after decoding is done.
 	 */
-	constructor (musicFile) {
-		if (!(musicFile instanceof File)) { throw Error(`Expected instance of File, but got ${musicFile.constructor.name}`) }
+	constructor (musicFile, decodingDoneCallback) {
+		if (!(musicFile instanceof File)) { throw Error(`Expected instance of 'File', but got ${musicFile.constructor.name}`) }
 		if (musicFile.type !== 'audio/mpeg') { throw Error(`Expected type 'audio/mpeg' but got ${musicFile.type}`) }
 
 		this.asset = AV.Asset.fromFile(musicFile)
-		this.player = AV.Player.fromFile(musicFile)
+
+		this.format = null
+		this.asset.get('format', format => { this.format = format })
+
+		this.decodedData = null
+		this.decodingDone = false
+		this.decodingDoneCallback = decodingDoneCallback
 	}
 
-	play () {
-		this.player.play()
+	/**
+	 * Progress in percent of the decoding process.
+	 */
+	get progress () {
+		return this.asset.buffered
+	}
+
+	/**
+	 * Start the decoding of the Mp3 file.
+	 */
+	startDecoding () {
+		this.asset.decodeToBuffer(buffer => {
+			this.decodedData = buffer
+			this.decodingDone = true
+			this.decodingDoneCallback(buffer)
+		})
+		this.asset.start()
+	}
+
+	get isDecodingDone() {
+		return this.decodedDone
+	}
+
+	get sampleRate () {
+		return this.format.sampleRate
+	}
+
+	get channelCount () {
+		return this.format.channelsPerFrame
 	}
 }
 

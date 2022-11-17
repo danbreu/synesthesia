@@ -13,9 +13,13 @@ async function main () {
 			return res.blob()
 		})
 	const file = new File([blob], 'madragora.mp3', { type: 'audio/mpeg' })
-	const musicAnalyzer = new MusicAnalyzer(file)
+	const ready = (buffer) => {
+		console.log('Decoding complete.')
+		console.log(buffer)
+	}
+	const musicAnalyzer = new MusicAnalyzer(file, ready)
 
-	document.body.addEventListener('click', () => { musicAnalyzer.play() }, true)
+	musicAnalyzer.startDecoding()
 
 	const scene = new THREE.Scene()
 	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
