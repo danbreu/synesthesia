@@ -10,12 +10,10 @@
     "minify": "npx uglifyjs public/bundle.js > public/min.tmp; mv public/min.tmp public/bundle.js"
   },
   "dependencies": {
-    "av": "^0.4.9",
     "compression": "^1.7.4",
     "express": "~4.16.1",
     "fft.js": "^4.0.4",
     "morgan": "~1.9.1",
-    "mp3": "^0.1.0",
     "three": "^0.146.0"
   },
   "devDependencies": {

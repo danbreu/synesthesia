@@ -5,21 +5,16 @@ const MusicAnalyzer = require('./musicAnalyzer.js')
  * Main entry point of the application.
  */
 async function main () {
-	const blob = await fetch('./music/madragora.mp3')
+	const blob = await fetch('./music/musicfox_dancing_street.wav')
 		.then((res) => {
 			if (!res.ok) {
 				throw Error(`File could not be fetched. Code: ${res.status}: ${res.statusText}`)
 			}
 			return res.blob()
 		})
-	const file = new File([blob], 'madragora.mp3', { type: 'audio/mpeg' })
-	const ready = (buffer) => {
-		console.log('Decoding complete.')
-		console.log(buffer)
-	}
-	const musicAnalyzer = new MusicAnalyzer(file, ready)
+	const file = new File([blob], 'madragora.mp3', { type: 'audio/vdn.wav' })
 
-	musicAnalyzer.startDecoding()
+	const musicAnalyzer = new MusicAnalyzer(file)
 
 	const scene = new THREE.Scene()
 	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)

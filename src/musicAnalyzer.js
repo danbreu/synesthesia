@@ -1,54 +1,64 @@
-const AV = require('av')
-require('mp3')
-
 /**
  * Class to analyze music properties like e.g. bpm, frequency spectrum, etc. from a music file.
  */
 module.exports = class MusicAnalyzer {
+	#buffer
+	#musicFile
+	#isInitialized = false
+	#decodedData
+
 	/**
 	 * Create a MusicAnalyzer object for given audio file.
-	 * @param {File} musicFile A file object of a MP3 music file.
-	 * @param {() => any} decodingDoneCallback Callback after decoding is done.
+	 * @param {File} musicFile A file object of a .wav music file.
 	 */
-	constructor (musicFile, decodingDoneCallback) {
+	constructor (musicFile) {
 		if (!(musicFile instanceof File)) { throw Error(`Expected instance of 'File', but got ${musicFile.constructor.name}`) }
-		if (musicFile.type !== 'audio/mpeg') { throw Error(`Expected type 'audio/mpeg' but got ${musicFile.type}`) }
+		if (musicFile.type !== 'audio/vnd.wav') { throw Error(`Expected type 'audio/vnd.wav' but got ${musicFile.type}`) }
 
-		this.asset = AV.Asset.fromFile(musicFile)
-
-		this.#format = null
-		this.asset.get('format', format => { this.format = format })
-
-		this.#decodedData = null
-		this.decodingDone = false
-		this.decodingDoneCallback = decodingDoneCallback
-	}
-
-	get isDecodingDone() {
-		return this.decodingDone
+		this.#musicFile = musicFile
 	}
 
 	/**
-	 * Start the decoding of the Mp3 file.
+	 * Initialize the Music Analyzer
 	 */
-	startDecoding () {
-		this.asset.decodeToBuffer(buffer => {
-			this.decodedData = buffer
-			this.decodingDone = true
-			this.decodingDoneCallback()
-		})
-		this.asset.start()
+	async initialize () {
+		this.#buffer = await this.#musicFile.arrayBuffer()
+		this.#decodedData = this.#decode()
+		this.#isInitialized = true
 	}
 
-	#splitChannel () {
-		if (!this.decodingDone) {
-			throw new Error("Can't split channels before decoding is done.")
+	/**
+	 * Decode the .wav file.
+	 * @returns Object of all data of the .wav file.
+	 */
+	#decode () {
+		const formatType = new Int16Array(this.#buffer.slice(20, 2))
+		if (formatType[0] !== 1) { throw new Error('Audio File contains no PCM data.') }
+
+		const channelCount = new Int16Array(this.#buffer.slice(22, 23))
+		const sampleRate = new Int32Array(this.#buffer.slice(24, 27))
+		const byteRate = new Int32Array(this.#buffer.slice(28, 31))
+		const blockAlign = new Int16Array(this.#buffer.slice(32, 33))
+		const bitsPerSample = new Int16Array(this.#buffer.slice(34, 35))
+		const pcmDataSize = new Int32Array(this.#buffer.slice(40, 43))
+
+		let pcmData
+		if (bitsPerSample === 16) {
+			pcmData = new Int16Array(this.#buffer.slice(44, this.#buffer.length - 1 - (pcmDataSize % 2)))
+		} else if (bitsPerSample === 32) {
+			pcmData = new Int32Array(this.#buffer.slice(44, this.#buffer.length - 1 - (pcmDataSize % 2)))
+		} else {
+			throw new Error('Unsupported bit depth. Supported are 16 and 32 bit.')
 		}
-		const sampleRate = this.format.sampleRate
-		const bitsPerChannel = this.format.bitsPerChannel
-		const channelCount = this.format.channelsPerFrame
 
-
+		return {
+			channelCount,
+			sampleRate,
+			byteRate,
+			blockAlign,
+			bitsPerSample,
+			pcmDataSize,
+			pcmData
+		}
 	}
-
 }
