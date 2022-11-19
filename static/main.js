@@ -1,7 +1,6 @@
 import * as THREE from "./ext/three.js";
-import { terrainSdfMaterial } from "./terrain.js"
-import { marchCubes } from "./marching_cubes.js"
-import { noise } from "./noise.js"
+import { noise, noiseBlueprint, bufferNoise, createBufferedNoise, getLayeredNoise } from "./noise.js"
+import { findStartingLocation, initTerrainWorker, updateChunkPosition } from "./terrain.js"
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -14,54 +13,52 @@ if(!context) {
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, context: context });
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
-
-const light = new THREE.AmbientLight(0xFFFFFF, 0.2)
-const hem = new THREE.DirectionalLight(0xFFFFFF, 1)
+const skyColor = 0xB1E1FF;  // light blue
+const groundColor = 0xB97A20;  // brownish orange
+const light = new THREE.HemisphereLight(skyColor, groundColor, 0.2);
+const hem = new THREE.PointLight(0xFFFFFF, 0.8)
 hem.position.y+=1
 scene.add(light)
-scene.add(hem)
-const material = new THREE.MeshPhongMaterial({color: 'red', flatShading: true}) //; terrainSdfMaterial()
- // STRIPES TEXTURE (GOOD FOR MAKING MARBLE)
-const stripes = (x, f) => {
-    let t = .5 + .5 * Math.sin(f * 2*Math.PI * x)
-    return t * t - .5
-}
- // TURBULENCE TEXTURE
-const turbulence = (x, y, z) => {
-    let f=1
-    let t = -.5
-    for ( ; f <=100/12 ; f *= 2)
-        t += Math.abs(noise(x,y,z,f) / f)
-    return t
-}
-let biggest = 0
-const n = (x,y,z) => {
-    x-=10; y-=10; z-=10;
-    return noise(z/20, y/20, x/20)*15 + noise(y/20, z/20, x/20)*15 + noise(x/20,y/20,z/20)*20 + noise(z/5,x/5,y/5) + noise(z/2,y/2,x/2)
-}
-const sph = (x,y,z) => {x-=4; y-=4; z-=4; return Math.sqrt(x*x+y*y+z*z)-4;}
-const cube = (x,y,z) => {
-    x-=6; y-=6; z-=6;
-    x = Math.abs(x)-3
-    y = Math.abs(y)-3
-    z = Math.abs(z)-3
+camera.add(hem)
 
-    const insideDistance = Math.min(Math.max(x, Math.max(y, z)), 0.0);
+const n0 = noiseBlueprint(new THREE.Matrix4().set(0, 0, 1/34, 0, 0, 1/30, 0, 0, 1/30, 0, 0, 0, 0, 0, 0, 1), new THREE.Matrix4().makeTranslation(0, 3, 2), 10)
+const n2 = noiseBlueprint(new THREE.Matrix4().multiplyScalar(1/25), new THREE.Matrix4(), 10)
+const n3 = noiseBlueprint(new THREE.Matrix4().set(0, 0, 1/5, 0, 1/5, 0, 0, 0, 0, 1/5, 0, 0, 0, 0, 0, 1), new THREE.Matrix4(), 2)
+const n4 = noiseBlueprint(new THREE.Matrix4().set(0, 0, 1/2, 0, 0, 1/2, 0, 0, 1/2, 0, 0, 0, 0, 0, 0, 1), new THREE.Matrix4(), 5)
+const blueprints = [n0, n2, n3]
+blueprints.forEach(bufferNoise)
+const fun = getLayeredNoise(blueprints)
+const start = findStartingLocation(fun)
+scene.add( camera )
+camera.position.x = start[0]
+camera.position.y = start[1]
+camera.position.z = start[2]
 
-    const outsideDistance = Math.max(x, y, z, 0.0);
-
-    return insideDistance + outsideDistance;
+const v = 0.08
+const nextPos = (pos, dir) => {
+    return pos.add(dir.multiplyScalar(v))
 }
-const geometry = marchCubes(n, 20, 20, 20) //new THREE.BoxGeometry( 2, 2, 2 );
-const mesh = new THREE.Mesh( geometry, material );
-scene.add( mesh );
-camera.position.z = 50;
+const ln = new THREE.Vector3()
+const lne = new THREE.Matrix4()
+const lookNext = (pos, dir) => {
+    ln.copy(pos).add(dir)
+    let current = fun(pos.x, pos.y, pos.z)
+    let next = fun(ln.x, ln.y, ln.z)
 
+    if(current - next > 0) {
+        lne.makeRotationY((current-next)/10)
+        lne.makeRotationX((current-next)/30)
+        dir.applyMatrix4(lne)
+    } 
+    dir.normalize()
+}
+
+const pos = new THREE.Vector3()
+const camLookAt = new THREE.Vector3()
 const render = () => {
-    mesh.rotation.x += 0.01
-    mesh.rotation.y += 0.01
+    updateChunkPosition(scene, blueprints, pos.set(Math.floor(camera.position.x/32),Math.floor(camera.position.y/32),Math.floor(camera.position.z/32)))
+    nextPos(camera.position, camera.getWorldDirection(camLookAt))
     requestAnimationFrame( render )
     renderer.render( scene, camera )
-    console.log(biggest)
 }
 render()

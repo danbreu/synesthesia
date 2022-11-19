@@ -1,48 +1,136 @@
 import * as THREE from "./ext/three.js";
 
-import { noise, toArray, toDepthTexture } from "./noise.js"
+import { marchCubes } from "./marching_cubes.js"
+import { noise, noiseBlueprint, bufferNoise, getBufferedNoise, createBufferedNoise } from "./noise.js"
 
-export const terrainSdfMaterial = () => {
-  const noise1 = toDepthTexture(toArray(sampleNoise(0.2), 16, 16, 16), 16, 16, 16)
-  const noise2 = toDepthTexture(toArray(sampleNoise(0.1), 16, 16, 16), 16, 16, 16)
-  const noise3 = toDepthTexture(toArray(sampleNoise(0.03), 16, 16, 16), 16, 16, 16)
+const CHUNK_SIZE = 32
+const RENDER_DIRECTIONS = [new THREE.Vector3(0, 0, 0),
+                           new THREE.Vector3(0, 1, 0),
+                           new THREE.Vector3(0, -1, 0),
+                           new THREE.Vector3(1, 0, 0),
+                           new THREE.Vector3(0, 0, 1),
+                           new THREE.Vector3(-1, 0, 0),
+                           new THREE.Vector3(0, 0, -1),
+                           new THREE.Vector3(-1, 0, 1),
+                           new THREE.Vector3(-1, 0, -1),
+                           new THREE.Vector3(1, 0, 1),
+                           new THREE.Vector3(1, 0, -1),
+                           new THREE.Vector3(0, -1, 1),
+                           new THREE.Vector3(0, -1, -1),
+                           new THREE.Vector3(-1, -1, 0),
+                           new THREE.Vector3(-1, -1, 1),
+                           new THREE.Vector3(-1, -1, -1),
+                           new THREE.Vector3(1, -1, 0),
+                           new THREE.Vector3(1, -1, 1),
+                           new THREE.Vector3(1, -1, -1),
+                           new THREE.Vector3(0, 1, 1),
+                           new THREE.Vector3(0, 1, -1),
+                           new THREE.Vector3(-1, 1, 0),
+                           new THREE.Vector3(-1, 1, 1),
+                           new THREE.Vector3(-1, 1, -1),
+                           new THREE.Vector3(1, 1, 0),
+                           new THREE.Vector3(1, 1, 1),
+                           new THREE.Vector3(1, 1, -1)]
+let terrainWorker = null
+let meshes = {}
+let currentPosition = new THREE.Vector3(Infinity, Infinity, Infinity)
 
-    const uniforms = {
-      uNoise1: { value: noise1 },
-      uNoise2: { value: noise2 },
-      uNoise3: { value: noise3 }
+/*+
+ * Find location reasonably far away from walls to start at
+ */
+export const findStartingLocation = (noiseFunction, startX = 0, startY = 0, startZ = 0) => {
+  let [gradientX, gradientY, gradientZ] = [0, 0, 0]
+  let [x, y, z] = [startX, startY, startZ]
+  let delta = Infinity
+  let last = noiseFunction(x, y, z)
+  while(delta > 0.05) {
+    gradientX = noiseFunction(x+1, y, z) - last
+    gradientY = noiseFunction(x, y+1, z) - last
+    gradientZ = noiseFunction(x, y, z+1) - last
+
+    x += gradientX * STEP_SIZE
+    y += gradientY * STEP_SIZE
+    z += gradientZ * STEP_SIZE
+
+    delta = last
+    last = noiseFunction(x, y, z)
+    delta = last - delta
+  }
+  return [x, y, z]
+}
+const STEP_SIZE = 0.5
+
+export const initTerrainWorker = (scene, noiseBlueprints, setNoiseCallback) => {
+  terrainWorker = new Worker("terrain_worker.js", {type: "module"})
+
+  terrainWorker.onmessage = (message) => {
+    const [command, arg0, arg1, arg2] = message.data
+
+    switch(command) {
+    case "doneSetNoise":
+      setNoiseCallback(terrainWorker)
+    break;
+    case "doneMarchCubes":
+      createChunk(scene, arg0, arg2)
+    break;
     }
+  }
 
-    const material = new THREE.ShaderMaterial( {
-        uniforms: uniforms,
-        vertexShader: vertexShader,
-        fragmentShader: fragmentShader,
-    });
+  terrainWorker.postMessage(["setNoise", noiseBlueprints])
 
-    return material
+  return terrainWorker
 }
-const sampleNoise = step => (x,y,z) => noise(step*x, step*y, step*z)
-const vertexShader = `
-out vec4 pos;
 
-void main() {
-  vec4 modelPos = modelViewMatrix * vec4( position, 1.0 );
-  pos = modelPos;
-  gl_Position = projectionMatrix * modelPos;
+const createChunk = (scene, buffer, position) => {
+  const material = new THREE.MeshStandardMaterial({color: 'darkblue', flatShading: true})
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(buffer), 3))
+  geometry.computeBoundingSphere();
+  const mesh = new THREE.Mesh( geometry, material )
+  mesh.position.x = position[0]
+  mesh.position.y = position[1]
+  mesh.position.z = position[2]
+  scene.add(mesh)
 
+  meshes[hashPosition(position[0], position[1], position[2])] = mesh
 }
-`
-const fragmentShader = `
-precision mediump sampler3D;
 
-in vec4 pos;
-uniform sampler3D uNoise1;
-uniform sampler3D uNoise2;
-uniform sampler3D uNoise3;
+export const updateChunkPosition = (scene, noiseBlueprints, position) => {
+  if(position.equals(currentPosition)) return
 
-void main() {
+  console.log(`Now at: ${position.x} ${position.y} ${position.z}`)
+  currentPosition.copy(position)
+  if(terrainWorker) terrainWorker.terminate()
+  terrainWorker = initTerrainWorker(scene, noiseBlueprints, (worker) => {
+    const preserve = {}
 
-	gl_FragColor = vec4(1.0);
+    RENDER_DIRECTIONS.forEach((direction) => {
+      const chunkPosition = direction.clone().add(position).multiplyScalar(CHUNK_SIZE)
 
+      const positionHash = hashPosition(chunkPosition.x, chunkPosition.y, chunkPosition.z)
+      if(meshes[positionHash]) {
+        preserve[positionHash] = meshes[positionHash]
+      }
+      else {
+        worker.postMessage(["marchCubes", [CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE], [chunkPosition.x, chunkPosition.y, chunkPosition.z]])
+      }
+    })
+
+    Object.keys(meshes).forEach(key => {
+      if(!preserve[key]) {
+        const mesh = meshes[key]
+        console.log("delete", key)
+        scene.remove(mesh)
+        mesh.geometry.dispose()
+        mesh.material.dispose()
+      }
+    })
+
+    meshes = preserve
+    console.log("meshes", Object.keys(meshes).length)
+  })
 }
-`
+
+const hashPosition = (x, y, z) => {
+  return x * 11 + y * 13 + z * 17
+}
