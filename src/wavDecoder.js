@@ -1,7 +1,7 @@
 /**
  * Class to decode .wav audio files to mono PCM data.
  */
-module.exports = class WavDecoder {
+class WavDecoder {
 	#buffer
 	#musicFile
 	#isInitialized = false
@@ -9,8 +9,8 @@ module.exports = class WavDecoder {
 
 	/**
 	 * Basic decoder for WAVE audio files.
-	 * @param {File} musicFile A *File* object of a .wav music file.
-	 * @throws If `musicFile` is no instance of *File* or if it isn't the *type* 'audio/wav'.
+	 * @param {File} musicFile WAVE music file.
+	 * @throws If musicFile is no instance of {@link https://developer.mozilla.org/en-US/docs/Web/API/File File} or if it isn't the type 'audio/wav'.
 	 */
 	constructor (musicFile) {
 		if (!(musicFile instanceof File)) { throw Error(`Expected instance of 'File', but got ${musicFile.constructor.name}`) }
@@ -20,35 +20,41 @@ module.exports = class WavDecoder {
 	}
 
 	/**
-	 * @returns {Int32Array | Int16Array} Int32Array or Int16Array depending on whether the file has 32bit or 16bit depth.
+	 * Mono PCM data. Either a Int16Array or Int32Array based on bit depth.
+	 * @see {@link bitsPerSample}
+	 * @type {Int32Array | Int16Array}
 	 */
 	get pcmData () {
 		return this.#isInitialized ? this.#decodedData.pcmData : null
 	}
 
 	/**
-	 * @returns {number} The sample rate of the music file.
+	 * The sample rate of the music file.
+	 * @type {number}
 	 */
 	get sampleRate () {
 		return this.#isInitialized ? this.#decodedData.sampleRate : null
 	}
 
 	/**
-	 * @returns {number} The byte rate of the music file.
+	 * The byte rate of the music file.
+	 * @type {number}
 	 */
 	get byteRate () {
 		return this.#isInitialized ? this.#decodedData.byteRate : null
 	}
 
 	/**
-	 * @returns {number} The bit depth of one sample.
+	 * The bit depth of one sample.
+	 * @type {number}
 	 */
 	get bitsPerSample () {
 		return this.#isInitialized ? this.#decodedData.bitsPerSample : null
 	}
 
 	/**
-	 * @returns {number} Duration of the music file.
+	 * Duration of the music file.
+	 * @type {number}
 	 */
 	get duration () {
 		return this.#isInitialized ? this.#decodedData.duration : null
@@ -119,3 +125,5 @@ module.exports = class WavDecoder {
 		this.#decodedData.pcmData = monoPcmData
 	}
 }
+
+module.exports = WavDecoder
