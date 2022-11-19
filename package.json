@@ -6,7 +6,8 @@
     "start": "node ./bin/www",
     "bundle": "webpack",
     "lint": "npx eslint \"**/*.js\"",
-    "lint-fix": "npx eslint \"**/*.js\" --fix"
+    "lint-fix": "npx eslint \"**/*.js\" --fix",
+    "doc": "jsdoc -c jsdoc-config.json"
   },
   "dependencies": {
     "compression": "^1.7.4",
@@ -16,6 +17,7 @@
     "three": "^0.146.0"
   },
   "devDependencies": {
+    "clean-jsdoc-theme": "^4.1.8",
     "eslint": "^8.27.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.26.0",

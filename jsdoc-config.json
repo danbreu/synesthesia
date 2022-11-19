@@ -1,0 +1,20 @@
+{
+	"plugins": ["plugins/markdown"],
+	"source": {
+		"include": [
+			"./src/",
+			"./package.json",
+			"./README.md"
+		]
+	},
+	"sourceType": "module",
+	"opts": {
+		"encoding": "utf8",
+		"destination": "doc",
+		"recurse": true,
+		"template": "node_modules/clean-jsdoc-theme"
+	},
+	"templates": {
+		"cleverLinks": true
+	}
+}
