@@ -2,9 +2,12 @@
 	"plugins": ["plugins/markdown"],
 	"source": {
 		"include": [
-			"./src/",
+			"./public/",
 			"./package.json",
 			"./README.md"
+		],
+		"exclude" : [
+			"./public/ext/"
 		]
 	},
 	"sourceType": "module",
