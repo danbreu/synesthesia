@@ -39,13 +39,13 @@ class MusicAnalyzer {
 	/**
 	 * Returns the bassness at a given time.
 	 *
-	 * @param {number} time Time in milliseconds where the bass should be get.
+	 * @param {number} time Time in seconds where the magnitude should be read.
 	 * @param {number} lowerFrequency Lower frequency of the slice.
 	 * @param {number} upperFrequency Upper frequency of the slice.
 	 * @returns {number} Integer between 0 and 255 which represents bassness.
 	 */
 	getFrequencySlice (time, lowerFrequency, upperFrequency) {
-		if (time >= (this.#duration * 1000)) { return null }
+		if (time >= this.#duration) { return null }
 
 		const key = this.#hashFrequencyRange(lowerFrequency, upperFrequency)
 		const mapEntry = this.#frequencyMap.get(key)
@@ -54,7 +54,7 @@ class MusicAnalyzer {
 			this.#frequencyMap.set(key, this.#createFrequencySliceMap(lowerFrequency, upperFrequency))
 		}
 
-		const timeKey = Math.floor(time / 1000 * this.#frameRate)
+		const timeKey = Math.floor(time * this.#frameRate)
 		return this.#frequencyMap.get(key).get(timeKey)
 	}
 
