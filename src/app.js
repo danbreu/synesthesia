@@ -1,21 +1,36 @@
 const THREE = require('three')
-const MusicAnalyzer = require('./musicAnalyzer.js')
+const MusicAnalyzer = require('./musicAnalyzer')
+const WavDecoder = require('./wavDecoder')
 
 /**
  * Main entry point of the application.
  */
 async function main () {
-	const blob = await fetch('./music/musicfox_dancing_street.wav')
+	initMusicAnalyzer()
+
+	initThree()
+}
+
+const initMusicAnalyzer = async () => {
+	const blob = await fetch('./music/madragora.wav')
 		.then((res) => {
 			if (!res.ok) {
 				throw Error(`File could not be fetched. Code: ${res.status}: ${res.statusText}`)
 			}
 			return res.blob()
 		})
-	const file = new File([blob], 'madragora.mp3', { type: 'audio/vdn.wav' })
+	const file = new File([blob], 'madragora.mp3', { type: 'audio/wav' })
 
-	const musicAnalyzer = new MusicAnalyzer(file)
+	const wavDecoder = new WavDecoder(file)
+	await wavDecoder.start()
+	const pcmData = wavDecoder.pcmData
 
+	const musicAnalyzer = new MusicAnalyzer(pcmData, wavDecoder.duration, wavDecoder.sampleRate)
+
+	console.log(musicAnalyzer.getBassness(56800))
+}
+
+const initThree = () => {
 	const scene = new THREE.Scene()
 	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
 
