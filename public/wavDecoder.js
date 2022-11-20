@@ -126,4 +126,4 @@ class WavDecoder {
 	}
 }
 
-module.exports = WavDecoder
+export default WavDecoder

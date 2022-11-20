@@ -1,4 +1,4 @@
-const FFT = require('fft.js')
+import FFT from './ext/fft.js'
 
 /**
  * Class to analyze music properties like e.g. bpm, frequency spectrum, etc. from music PCM data.
@@ -99,4 +99,4 @@ class MusicAnalyzer {
 	}
 }
 
-module.exports = MusicAnalyzer
+export default MusicAnalyzer
