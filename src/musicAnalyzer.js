@@ -1,6 +1,4 @@
 const FFT = require('fft.js')
-const FileSaver = require('file-saver')
-
 
 /**
  * Class to analyze music properties like e.g. bpm, frequency spectrum, etc. from music PCM data.
@@ -28,7 +26,7 @@ class MusicAnalyzer {
 			throw Error(`Expected instance of Int16Array or Int32Array, but got ${pcmData.constructor.name}`)
 		}
 		if (Math.log2(1024) % 1 !== 0) {
-			throw Error(`Parameter samplesPerFrame must be a power of 2.`)
+			throw Error('Parameter samplesPerFrame must be a power of 2.')
 		}
 
 		this.#pcmData = pcmData
@@ -57,8 +55,10 @@ class MusicAnalyzer {
 
 	/**
 	 * Create a bassness map with FFT.
-	 * @details Creates a bassness map with using Radix-4 FFT of {@link https://github.com/indutny/fft.js/ fft.js}.
-	 * 			To be better able to interpret the output, the highest bass value will be taken and mapped to 255.
+	 *
+	 * @details
+	 * Creates a bassness map with using Radix-4 FFT of {@link https://github.com/indutny/fft.js/ fft.js}.
+	 * To be better able to interpret the output, the highest bass value will be taken and mapped to 255.
 	 */
 	#createBassnessMap () {
 		const frameCount = Math.floor(this.#duration * this.#frameRate)
@@ -73,7 +73,7 @@ class MusicAnalyzer {
 			this.#bassMap.set(i, bassness)
 		}
 		const max = Math.max(...this.#bassMap.values())
-		this.#bassMap.forEach( (val, key, map) => {
+		this.#bassMap.forEach((val, key, map) => {
 			map.set(key, Math.floor(MusicAnalyzer.#mapValues(val, 0, max, 0, 255)))
 		})
 	}
@@ -94,10 +94,10 @@ class MusicAnalyzer {
 		for (let i = 0; i <= higherIndex; ++i) {
 			const re = fftResult[2 * i]
 			const im = fftResult[2 * i + 1]
-			magnitude.push(Math.sqrt(re*re + im*im))
+			magnitude.push(Math.sqrt(re * re + im * im))
 		}
 
-		return magnitude.reduce((a,b) => a + b, 0) / magnitude.length
+		return magnitude.reduce((a, b) => a + b, 0) / magnitude.length
 	}
 }
 
