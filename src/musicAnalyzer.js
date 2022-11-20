@@ -10,7 +10,6 @@ class MusicAnalyzer {
 	#samplesPerFrame
 	#bassMap = new Map()
 	#frameRate
-	#bitsPerSample
 
 	/**
 	 * Create a MusicAnalyzer object for given PCM data.
@@ -21,7 +20,7 @@ class MusicAnalyzer {
 	 * @throws If `pcmData` is no instance of *Int16Array* or *Int32Array*.
 	 * @throws If `samplesPerFrame` is no power of 2.
 	 */
-	constructor (pcmData, duration, sampleRate, bitsPerSample, samplesPerFrame = 1024) {
+	constructor (pcmData, duration, sampleRate, samplesPerFrame = 1024) {
 		if (!(pcmData instanceof Int16Array) && !(pcmData instanceof Int32Array)) {
 			throw Error(`Expected instance of Int16Array or Int32Array, but got ${pcmData.constructor.name}`)
 		}
@@ -34,7 +33,6 @@ class MusicAnalyzer {
 		this.#sampleRate = sampleRate
 		this.#samplesPerFrame = samplesPerFrame
 		this.#frameRate = this.#sampleRate / samplesPerFrame
-		this.#bitsPerSample = pcmData instanceof Int16Array ? 16 : 32
 
 		this.#createBassnessMap()
 	}
