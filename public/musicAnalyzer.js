@@ -8,11 +8,12 @@ class MusicAnalyzer {
 	#duration
 	#sampleRate
 	#samplesPerFrame
-	#bassMap = new Map()
+	#frequencyMap = new Map()
 	#frameRate
 
 	/**
 	 * Create a MusicAnalyzer object for given PCM data.
+	 *
 	 * @param {Int16Array | Int32Array} pcmData Mono PCM data of the music file.
 	 * @param {number} duration The duration of the music file in seconds.
 	 * @param {number} sampleRate The sample rate of the PCM data in samples per second.
@@ -33,32 +34,44 @@ class MusicAnalyzer {
 		this.#sampleRate = sampleRate
 		this.#samplesPerFrame = samplesPerFrame
 		this.#frameRate = this.#sampleRate / samplesPerFrame
-
-		this.#createBassnessMap()
 	}
 
 	/**
 	 * Returns the bassness at a given time.
+	 *
 	 * @param {number} time Time in milliseconds where the bass should be get.
+	 * @param {number} lowerFrequency Lower frequency of the slice.
+	 * @param {number} upperFrequency Upper frequency of the slice.
 	 * @returns {number} Integer between 0 and 255 which represents bassness.
 	 */
-	getBassness (time) {
-		if (time >= (this.#duration * 1000)) {
-			return null
+	getFrequencySlice (time, lowerFrequency, upperFrequency) {
+		if (time >= (this.#duration * 1000)) { return null }
+
+		const key = this.#hashFrequencyRange(lowerFrequency, upperFrequency)
+		const mapEntry = this.#frequencyMap.get(key)
+
+		if (!mapEntry) {
+			this.#frequencyMap.set(key, this.#createFrequencySliceMap(lowerFrequency, upperFrequency))
 		}
 
-		const key = Math.floor(time / 1000 * this.#frameRate)
-		return this.#bassMap.get(key)
+		const timeKey = Math.floor(time / 1000 * this.#frameRate)
+		return this.#frequencyMap.get(key).get(timeKey)
 	}
 
 	/**
-	 * Create a bassness map with FFT.
+	 * Create a map for the magnitudes of a given frequency slice with FFT.
+	 *
+	 * @param {number} lowerFrequency lower frequency of the slice.
+	 * @param {number} upperFrequency upper frequency of the slice.
+	 * @returns {Map<number, number>} Map consisting of time and magnitude of frequency slice.
 	 *
 	 * @details
-	 * Creates a bassness map with using Radix-4 FFT of {@link https://github.com/indutny/fft.js/ fft.js}.
-	 * To be better able to interpret the output, the highest bass value will be taken and mapped to 255.
+	 * Creates a map with a key being the frame count and the value representing the magnitude in the given frequency range.
+	 * The magnitude is determined using Radix-4 FFT of {@link https://github.com/indutny/fft.js/ fft.js}.
+	 * To be better able to interpret the output, the highest average magnitude will be taken and mapped to 255.
 	 */
-	#createBassnessMap () {
+	#createFrequencySliceMap (lowerFrequency, upperFrequency) {
+		const map = new Map
 		const frameCount = Math.floor(this.#duration * this.#frameRate)
 		const fft = new FFT(this.#samplesPerFrame)
 		const output = fft.createComplexArray()
@@ -67,27 +80,51 @@ class MusicAnalyzer {
 			fft.realTransform(output, this.#pcmData.slice(i * this.#samplesPerFrame, (i + 1) * this.#samplesPerFrame))
 			fft.fromComplexArray(output, real)
 			fft.completeSpectrum(output)
-			const bassness = this.#analyzeBassness(output)
-			this.#bassMap.set(i, bassness)
+			const bassness = this.#analyzeSpectrumSlice(output, lowerFrequency, upperFrequency)
+			map.set(i, bassness)
 		}
-		const max = Math.max(...this.#bassMap.values())
-		this.#bassMap.forEach((val, key, map) => {
+		const max = Math.max(...map.values())
+		map.forEach((val, key, map) => {
 			map.set(key, Math.floor(MusicAnalyzer.#mapValues(val, 0, max, 0, 255)))
 		})
+		return map
 	}
 
+	/**
+	 * Method to create a key for the {@link #frequencyMap}.
+	 *
+	 * @param {number} lowerFrequency Lower frequency for the hash value.
+	 * @param {number} upperFrequency Upper frequency for the hash value.
+	 * @returns {number} Hash value.
+	 */
+	#hashFrequencyRange (lowerFrequency, upperFrequency) {
+		return lowerFrequency * 11 + upperFrequency * 13
+	}
+
+	/**
+	 * Map values from one range to another.
+	 *
+	 * @param {number} value Input value which should be mapped.
+	 * @param {number} x1 Lower border from input range.
+	 * @param {number} y1 Upper border from input range.
+	 * @param {number} x2 Lower border from output range.
+	 * @param {number} y2 Upper border form output range.
+	 * @returns {number} Mapped value.
+	 */
 	static #mapValues (value, x1, y1, x2, y2) {
 		return (value - x1) * (y2 - x2) / (y1 - x1) + x2
 	}
 
 	/**
 	 * Calculate average magnitude of bass frequencies.
+	 *
 	 * @param {Array} fftResult Complex array of the FFT result.
 	 * @returns {number} The average bass magnitude.
 	 */
-	#analyzeBassness (fftResult) {
+	#analyzeSpectrumSlice (fftResult, lowerFrequency, higherFrequency) {
 		const magnitude = []
-		const higherIndex = Math.floor(this.#samplesPerFrame * 250 / this.#sampleRate)
+		const lowerIndex = Math.floor(this.#samplesPerFrame * lowerFrequency / this.#sampleRate)
+		const higherIndex = Math.floor(this.#samplesPerFrame * higherFrequency / this.#sampleRate)
 
 		for (let i = 0; i <= higherIndex; ++i) {
 			const re = fftResult[2 * i]
@@ -97,6 +134,7 @@ class MusicAnalyzer {
 
 		return magnitude.reduce((a, b) => a + b, 0) / magnitude.length
 	}
+
 }
 
 export default MusicAnalyzer
