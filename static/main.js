@@ -21,43 +21,123 @@ hem.position.y+=1
 scene.add(light)
 camera.add(hem)
 
-const n0 = noiseBlueprint(new THREE.Matrix4().set(0, 0, 1/34, 0, 0, 1/30, 0, 0, 1/30, 0, 0, 0, 0, 0, 0, 1), new THREE.Matrix4().makeTranslation(0, 3, 2), 10)
-const n2 = noiseBlueprint(new THREE.Matrix4().multiplyScalar(1/25), new THREE.Matrix4(), 10)
-const n3 = noiseBlueprint(new THREE.Matrix4().set(0, 0, 1/5, 0, 1/5, 0, 0, 0, 0, 1/5, 0, 0, 0, 0, 0, 1), new THREE.Matrix4(), 2)
-const n4 = noiseBlueprint(new THREE.Matrix4().set(0, 0, 1/2, 0, 0, 1/2, 0, 0, 1/2, 0, 0, 0, 0, 0, 0, 1), new THREE.Matrix4(), 5)
+const scale = 0.6
+const n0 = noiseBlueprint(new THREE.Matrix4().set(0, 0, 1/60*scale, 0, 0, 1/40*scale, 0, 0, 1/40*scale, 0, 0, 0, 0, 0, 0, 1), new THREE.Matrix4().makeTranslation(2, 2, 2), 20)
+const n2 = noiseBlueprint(new THREE.Matrix4().multiplyScalar(1/80*scale), new THREE.Matrix4(), 20)
+const n3 = noiseBlueprint(new THREE.Matrix4().set(0, 0, 1/5*scale, 0, 1/5*scale, 0, 0, 0, 0, 1/5*scale, 0, 0, 0, 0, 0, 1), new THREE.Matrix4(), 1)
+const n4 = noiseBlueprint(new THREE.Matrix4().set(0, 0, 1/2*scale, 0, 0, 1/2*scale, 0, 0, 1/2*scale, 0, 0, 0, 0, 0, 0, 1), new THREE.Matrix4(), 5)
 const blueprints = [n0, n2, n3]
 blueprints.forEach(bufferNoise)
 const fun = getLayeredNoise(blueprints)
-const start = findStartingLocation(fun)
+const start = findStartingLocation(fun, 5, 5 , 5)
 scene.add( camera )
 camera.position.x = start[0]
 camera.position.y = start[1]
 camera.position.z = start[2]
 
-const v = 0.08
+const v = 0.1
 const nextPos = (pos, dir) => {
     return pos.add(dir.multiplyScalar(v))
 }
-const ln = new THREE.Vector3()
-const lne = new THREE.Matrix4()
-const lookNext = (pos, dir) => {
-    ln.copy(pos).add(dir)
-    let current = fun(pos.x, pos.y, pos.z)
-    let next = fun(ln.x, ln.y, ln.z)
 
-    if(current - next > 0) {
-        lne.makeRotationY((current-next)/10)
-        lne.makeRotationX((current-next)/30)
-        dir.applyMatrix4(lne)
-    } 
-    dir.normalize()
+const marchRay = (terrainFunction, position, direction, noSamples = 10, isoLevel = 0) => {
+    let distance = 0
+    let cumDistance = 0
+
+    for (let i = 0; i < noSamples; i++) {
+        distance = terrainFunction(position.x + direction.x * distance,
+                        position.y + direction.y * distance,
+                        position.z + direction.z * distance) - 2
+        if(distance > isoLevel) cumDistance += distance
+        else break
+    }
+
+    return cumDistance
+}
+console.log(fun(...start))
+
+const coneAngle = 4
+const samples = 40
+const buffer = new THREE.Vector3(0,0,0)
+const startingPoint = new THREE.Vector3()
+const bufferEuler = new THREE.Euler()
+const topEuler = new THREE.Euler()
+const topDirection = new THREE.Vector3()
+const oldEuler = new THREE.Euler(0, 0, 0)
+const angularVelocity = new THREE.Euler(0.2,0.2,0)
+const raycaster = new THREE.Raycaster()
+const lookNext = (terrainFunction, camera) => {
+    camera.getWorldDirection(buffer)
+
+    startingPoint.copy(buffer)
+
+    let tries = 0
+    let topDistance = 0
+    const posDistance = terrainFunction(camera.position.x, camera.position.y, camera.position.z)
+    for(let i = 0; i < samples*2; i++) {
+        bufferEuler.set(0, coneAngle/samples*i/2*(i % 2 == 0 ? -1 : 1), 0)
+
+        buffer.copy(startingPoint)
+        buffer.applyEuler(bufferEuler)
+
+        const distance = marchRay(terrainFunction, camera.position, buffer)
+        if(distance > (posDistance < 0 ? 10 : 8)) {
+            topEuler.copy(bufferEuler)
+            topDistance = distance
+            break
+        }
+        tries++
+    }
+
+    let y = false
+    for(let i = 0; i < tries*2; i++) {
+        bufferEuler.set(coneAngle/samples*i/2*(i % 2 == 0 ? -1 : 1), 0, 0)
+
+        buffer.copy(startingPoint)
+        buffer.applyEuler(bufferEuler)
+
+        const distance = marchRay(terrainFunction, camera.position, buffer)
+        if(distance > topDistance) {
+            topEuler.copy(bufferEuler)
+            y = true
+            break
+        }
+    }
+
+    for(let i = 0; i < samples*2; i++) {
+        bufferEuler[ y ? "x" : "y" ] = coneAngle/samples*i/2*(i % 2 == 0 ? -1 : 1)
+
+        buffer.copy(startingPoint)
+        buffer.applyEuler(bufferEuler)
+
+        const distance = marchRay(terrainFunction, camera.position, buffer)
+        if(distance > (posDistance < 0 ? 12 : 8)) {
+            topEuler.copy(bufferEuler)
+            break
+        }
+    }
+
+    camera.getWorldDirection(buffer)
+    topEuler.x *= angularVelocity.x
+    topEuler.y *= angularVelocity.y
+    buffer.applyEuler(topEuler)
+    if(!(topEuler.x == topEuler.y == topEuler.z == 0)) {
+        console.log("a", camera.getWorldDirection(topDirection))
+        console.log("b", buffer)
+    }
+
+    return buffer
 }
 
+
 const pos = new THREE.Vector3()
-const camLookAt = new THREE.Vector3()
 const render = () => {
     updateChunkPosition(scene, blueprints, pos.set(Math.floor(camera.position.x/32),Math.floor(camera.position.y/32),Math.floor(camera.position.z/32)))
-    nextPos(camera.position, camera.getWorldDirection(camLookAt))
+
+    camera.lookAt(lookNext(fun, camera).add(camera.position))
+    //lookNext(fun, camera)
+    nextPos(camera.position, camera.getWorldDirection(buffer))
+
     requestAnimationFrame( render )
     renderer.render( scene, camera )
 }

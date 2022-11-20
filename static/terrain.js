@@ -82,7 +82,6 @@ export const initTerrainWorker = (scene, noiseBlueprints, setNoiseCallback) => {
 }
 
 const createChunk = (scene, buffer, position) => {
-  const material = new THREE.MeshStandardMaterial({color: 'darkblue', flatShading: true})
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(buffer), 3))
   geometry.computeBoundingSphere();
@@ -94,6 +93,7 @@ const createChunk = (scene, buffer, position) => {
 
   meshes[hashPosition(position[0], position[1], position[2])] = mesh
 }
+const material = new THREE.MeshStandardMaterial({color: 'darkblue', flatShading: true})
 
 export const updateChunkPosition = (scene, noiseBlueprints, position) => {
   if(position.equals(currentPosition)) return
@@ -129,6 +129,10 @@ export const updateChunkPosition = (scene, noiseBlueprints, position) => {
     meshes = preserve
     console.log("meshes", Object.keys(meshes).length)
   })
+}
+
+export const getCurrentChunk = () => {
+  return meshes[hashPosition(currentPosition.x, currentPosition.y, currentPosition.z)]
 }
 
 const hashPosition = (x, y, z) => {
