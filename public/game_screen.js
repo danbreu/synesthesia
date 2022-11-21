@@ -37,6 +37,9 @@ class GameScreen {
         return [blueprints, fun]
     }
 
+    /**
+     * Initialize audio player and music analyzer
+     */
     #initSound() {
         const wavDecoder = this.#assetLocations.wavDecoder
         this.#musicAnalyzer = new MusicAnalyzer(wavDecoder.pcmData, wavDecoder.duration, wavDecoder.sampleRate)
@@ -44,6 +47,7 @@ class GameScreen {
         const url = URL.createObjectURL(this.#assetLocations["./music/mandragora.wav"])
         this.#audio = new Audio(url)
         this.#audio.play()
+        this.#audio.currentTime = 100
     }
 
     /**
