@@ -1,7 +1,7 @@
 import { Matrix4, Vector3, Euler, Scene, PerspectiveCamera, WebGLRenderer, HemisphereLight, PointLight } from './ext/three.js'
 import MusicAnalyzer from './musicAnalyzer.js'
-import { noiseBlueprint, bufferNoise, getLayeredNoise } from './noise.js'
-import { findStartingLocation, updateChunkPosition } from './terrain.js'
+import { noiseBlueprint, bufferNoise, getLayeredNoise, getLayeredNoiseShader } from './noise.js'
+import { findStartingLocation, initShaderMaterial, updateChunkPosition } from './terrain.js'
 import WavDecoder from './wavDecoder.js'
 
 /**
@@ -33,17 +33,14 @@ const initMusicAnalyzer = async () => {
 }
 
 const initNoise = () => {
-	const scale = 0.6
-	const n0 = noiseBlueprint(new Matrix4().set(0, 0, 1 / 60 * scale, 0, 0, 1 / 40 * scale, 0, 0, 1 / 40 * scale, 0, 0, 0, 0, 0, 0, 1), new Matrix4().makeTranslation(2, 2, 2), 20)
-	const n2 = noiseBlueprint(new Matrix4().multiplyScalar(1 / 80 * scale), new Matrix4(), 20)
-	const n3 = noiseBlueprint(new Matrix4().set(0, 0, 1 / 5 * scale, 0, 1 / 5 * scale, 0, 0, 0, 0, 1 / 5 * scale, 0, 0, 0, 0, 0, 1), new Matrix4(), 1)
-	const n4 = noiseBlueprint(new Matrix4().set(0, 0, 1 / 2 * scale, 0, 0, 1 / 2 * scale, 0, 0, 1 / 2 * scale, 0, 0, 0, 0, 0, 0, 1), new Matrix4(), 5)
-	const blueprints = [n0, n2, n3]
+	const blueprints = [noiseBlueprint(new Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new Matrix4().makeTranslation(4,4,4), 8),
+		noiseBlueprint(new Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new Matrix4().makeScale(1, 0, 1), 8)]
+	console.log(getLayeredNoiseShader(blueprints))
 	blueprints.forEach(bufferNoise)
 	const fun = getLayeredNoise(blueprints)
-	const start = findStartingLocation(fun, 5, 5, 5)
+	//const start = findStartingLocation(fun, 5, 5, 5)
 
-	return [blueprints, fun, start]
+	return [blueprints, fun, null]//, start]
 }
 
 const v = 0.1
@@ -51,6 +48,16 @@ const nextPos = (pos, dir) => {
 	return pos.add(dir.multiplyScalar(v))
 }
 
+/**
+ * Casts a ray from position in direction using ray marching on terrainFunction
+ * 
+ * @param {(x, y, z) => number} terrainFunction Geometry defined implicitly using (distanceish) scalar field
+ * @param {Vector3} position Position to cast the ray from
+ * @param {Vector3} direction Direction to cast the ray in
+ * @param {number} noSamples Maximum amount of times the ray is advanced 
+ * @param {number} isoLevel Level below which an object exist at point
+ * @returns number
+ */
 const marchRay = (terrainFunction, position, direction, noSamples = 10, isoLevel = 0) => {
 	let distance = 0
 	let cumDistance = 0
@@ -129,10 +136,6 @@ const lookNext = (terrainFunction, camera) => {
 	topEuler.x *= angularVelocity.x
 	topEuler.y *= angularVelocity.y
 	buffer.applyEuler(topEuler)
-	if (!(topEuler.x == topEuler.y == topEuler.z == 0)) {
-		console.log('a', camera.getWorldDirection(topDirection))
-		console.log('b', buffer)
-	}
 
 	return buffer
 }
@@ -152,15 +155,16 @@ const initThree = () => {
 	document.body.appendChild(renderer.domElement)
 
 	const [noiseBlueprints, noiseFunction, startLocation] = initNoise()
-	camera.position.x = startLocation[0]
-	camera.position.y = startLocation[1]
-	camera.position.z = startLocation[2]
+	initShaderMaterial(noiseBlueprints)
+	camera.position.x = 16
+	camera.position.y = 16
+	camera.position.z = 8
 
 	const skyColor = 0xB1E1FF
 	const groundColor = 0xB97A20
 	const hemisphere = new HemisphereLight(skyColor, groundColor, 0.2)
 	const point = new PointLight(0xFFFFFF, 0.8)
-	point.position.y += 1
+	point.position.y += 2
 	scene.add(hemisphere)
 	camera.add(point)
 
@@ -185,8 +189,10 @@ const initThree = () => {
 				Math.floor(camera.position.y / 32),
 				Math.floor(camera.position.z / 32)))
 
-		camera.lookAt(lookNext(noiseFunction, camera).add(camera.position))
-		nextPos(camera.position, camera.getWorldDirection(buffer))
+		//camera.lookAt(lookNext(noiseFunction, camera).add(camera.position))
+		//nextPos(camera.position, camera.getWorldDirection(buffer))
+		camera.position.z -= 0.3
+		//camera.rotation.x -= 0.01
 
 		resizeCanvasToWindowSize()
 		requestAnimationFrame(animate)

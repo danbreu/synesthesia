@@ -174,20 +174,6 @@
  }
 
  /**
-  * Import buffered noise from texture atlas image
-  */
- export const importBufferedNoise = (atlas) => {
-
- }
-
- /**
-  * Export buffered noise to texture atlas image
-  */
- export const exportBufferedNoise = () => {
-
- }
-
- /**
   * Get function for sampling buffered noise
   */
  export const getBufferedNoise = (blueprint) => {
@@ -219,24 +205,50 @@
   * Get function calculating layered noise on the CPU
   */
  export const getLayeredNoise = (noiseBlueprints) => {
-	 const functions = noiseBlueprints.map(getBufferedNoise)
-	 return (x, y, z) => {
-		 let value = 0
-		 functions.forEach(fun => value += fun(x, y, z))
-		 return value
-	 }
+	const functions = noiseBlueprints.map(getBufferedNoise)
+	return (x, y, z) => {
+		let value = y - 8
+		functions.forEach(fun => value += fun(x, y, z))
+		return value
+	}
  }
 
  /**
   * Get shader program for calculating layered noise on the GPU
   */
- export const getLayeredNoiseShader = (noiseBlueprints) => {
+ export const getLayeredNoiseShader = (noiseBlueprints, name = "sampleNoise") => {
+	const noiseTexture = (no) => `uniform sampler3D uNoise${name}${no};\n`
+	const matrix = (m) => `mat4(${String(m.elements.map(x=>x.toFixed(12)))})`
+	const sampleTexture = (uniform, m, scalar) => `${scalar.toFixed(12)}*texture(uNoise${name}${uniform}, (${matrix(m)}*position).xyz).x`
 
+	let shader = ""
+	for(let i = 0; i < noiseBlueprints.length; i++) {
+		shader += noiseTexture(i)
+	}
+
+	shader += `float ${name}(vec4 position) {
+		return `
+	
+	for(let i = 0; i < noiseBlueprints.length; i++) {
+		shader += sampleTexture(i, noiseBlueprints[i].outputTransformation, noiseBlueprints[i].sampleScale)
+		if(i < noiseBlueprints.length - 1) shader += "+"
+	}
+
+	shader += "+position.y-8.0;\n}"
+
+	return shader
  }
 
  /**
   * Get textures for layered noise shader
   */
- export const getLayeredNoiseTextures = (noiseBlueprints) => {
+ export const getLayeredNoiseTextures = (noiseBlueprints, name = "sampleNoise") => {
+	const uniforms = {}
 
+	for(let i = 0; i < noiseBlueprints.length; i++) {
+		const blueprint = noiseBuffer[noiseBlueprints[i].inputTransformation]
+		uniforms[`uNoise${name}${i}`] = { value: toDepthTexture(blueprint, BUFFER_SIZE, BUFFER_SIZE, BUFFER_SIZE) }
+	}
+
+	return uniforms
  }

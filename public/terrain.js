@@ -1,39 +1,21 @@
-import * as THREE from "./ext/three.js";
+import * as THREE from "./ext/three.js"
 
-import { marchCubes } from "./marching_cubes.js"
-import { noise, noiseBlueprint, bufferNoise, getBufferedNoise, createBufferedNoise } from "./noise.js"
+import {getLayeredNoiseShader, getLayeredNoiseTextures} from "./noise.js"
 
-const CHUNK_SIZE = 32
-const RENDER_DIRECTIONS = [new THREE.Vector3(0, 0, 0),
-                           new THREE.Vector3(0, 1, 0),
-                           new THREE.Vector3(0, -1, 0),
-                           new THREE.Vector3(1, 0, 0),
-                           new THREE.Vector3(0, 0, 1),
-                           new THREE.Vector3(-1, 0, 0),
-                           new THREE.Vector3(0, 0, -1),
-                           new THREE.Vector3(-1, 0, 1),
-                           new THREE.Vector3(-1, 0, -1),
-                           new THREE.Vector3(1, 0, 1),
+export const CHUNK_SIZE = 32
+const RENDER_DIRECTIONS = [new THREE.Vector3(0, 0, -1),
                            new THREE.Vector3(1, 0, -1),
-                           new THREE.Vector3(0, -1, 1),
-                           new THREE.Vector3(0, -1, -1),
-                           new THREE.Vector3(-1, -1, 0),
-                           new THREE.Vector3(-1, -1, 1),
-                           new THREE.Vector3(-1, -1, -1),
-                           new THREE.Vector3(1, -1, 0),
-                           new THREE.Vector3(1, -1, 1),
-                           new THREE.Vector3(1, -1, -1),
-                           new THREE.Vector3(0, 1, 1),
-                           new THREE.Vector3(0, 1, -1),
-                           new THREE.Vector3(-1, 1, 0),
-                           new THREE.Vector3(-1, 1, 1),
-                           new THREE.Vector3(-1, 1, -1),
-                           new THREE.Vector3(1, 1, 0),
-                           new THREE.Vector3(1, 1, 1),
-                           new THREE.Vector3(1, 1, -1)]
+                           new THREE.Vector3(0, 0, 0),
+                           new THREE.Vector3(-1, 0, -1),
+                           new THREE.Vector3(0, 0, -2),
+                           new THREE.Vector3(-1, 0, 0),
+                           new THREE.Vector3(-1, 0, -2),
+                           new THREE.Vector3(1, 0, 0),
+                           new THREE.Vector3(0, 0, -2)]
 let terrainWorker = null
 let meshes = {}
 let currentPosition = new THREE.Vector3(Infinity, Infinity, Infinity)
+let material = null
 
 /*+
  * Find location reasonably far away from walls to start at
@@ -81,6 +63,59 @@ export const initTerrainWorker = (scene, noiseBlueprints, setNoiseCallback) => {
   return terrainWorker
 }
 
+export const initShaderMaterial = (noiseBlueprints) => {
+  const shader = getLayeredNoiseShader(noiseBlueprints)
+  const uniforms = getLayeredNoiseTextures(noiseBlueprints)
+  material = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    vertexShader: `
+    precision mediump sampler3D;
+    precision mediump float;
+
+    out vec3 vPos;
+    out vec3 vNormal;
+
+    ${shader}
+
+    vec4 normalFromNoise(vec4 pos) {
+      float s = sampleNoise(pos);
+      return vec4(sampleNoise(pos+vec4(1.0,0.0,0.0,1.0))-s,
+        sampleNoise(pos+vec4(0.0,1.0,0.0,1.0))-s,
+        sampleNoise(pos+vec4(0.0,0.0,1.0,1.0))-s,
+        1.0);
+    } 
+  
+    void main() {
+      vec4 posVec4 = vec4( position, 1.0 );
+      vec4 modelPos = modelViewMatrix * posVec4;
+      vPos = position;
+      vNormal = normalFromNoise(modelPos).xyz;
+      gl_Position = projectionMatrix * modelPos;
+    }
+    `,
+    fragmentShader: `
+    in vec3 vPos;
+    in vec3 vNormal;
+    
+    void main() {
+      vec3 objectColor = vec3(1.0, 1.0, 1.0);
+      vec3 lightPos = vec3(5.0, 10.0, 0.0);
+      vec3 lightColor = vec3(0.0, 1.0, 0.0);
+      float ambientStrength = 0.1;
+      vec3 ambient = ambientStrength * lightColor;
+      
+      // diffuse
+      vec3 norm = normalize(vNormal);
+      vec3 lightDir = normalize(lightPos - vPos);
+      float diff = max(dot(norm, lightDir), 0.0);
+      vec3 diffuse = diff * lightColor;
+              
+      vec3 result = (ambient + diffuse) * objectColor;
+      gl_FragColor = vec4(result, 1.0);    
+    } `
+  })
+}
+
 const createChunk = (scene, buffer, position) => {
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(buffer), 3))
@@ -93,7 +128,6 @@ const createChunk = (scene, buffer, position) => {
 
   meshes[hashPosition(position[0], position[1], position[2])] = mesh
 }
-const material = new THREE.MeshStandardMaterial({color: 'darkblue', flatShading: true})
 
 export const updateChunkPosition = (scene, noiseBlueprints, position) => {
   if(position.equals(currentPosition)) return
