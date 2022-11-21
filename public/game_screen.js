@@ -5,6 +5,8 @@ import { initShaderMaterial, updateChunkPosition } from './terrain.js'
 import { EffectComposer } from './ext/threeAddons/postprocessing/EffectComposer.js'
 import { RenderPass } from './ext/threeAddons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from './ext/threeAddons/postprocessing/UnrealBloomPass.js'
+import { GLTFLoader } from './ext/threeAddons/loaders/GLTFLoader.js'
+import { OrbitControls } from './ext/threeAddons/controls/OrbitControls.js';
 import MusicAnalyzer from './musicAnalyzer.js'
 
 class GameScreen {
@@ -16,6 +18,9 @@ class GameScreen {
     #assetLocations
     #audio
     #musicAnalyzer
+    #controls
+    #saucer
+    #direction
 
     constructor(assetLocations) {
         this.#assetLocations = assetLocations
@@ -51,6 +56,18 @@ class GameScreen {
     }
 
     /**
+     * 
+     */
+    #initSaucer(onFinished) {
+        const loader = new GLTFLoader();
+        loader.load( "./assets/saucer.glb", function ( gltf ) {
+            onFinished(gltf)
+        }, undefined, function ( error ) {
+            console.error( error );
+        } );
+    }
+
+    /**
      * Initialize the game screen
      * 
      * @param {*} scene 
@@ -64,10 +81,32 @@ class GameScreen {
         this.#noiseFunction = noiseFunction
         this.#uniforms = initShaderMaterial(noiseBlueprints)
 
+        this.#initSaucer((gltf) => {
+            gltf.scene.scale.multiplyScalar(0.01)
+            this.#saucer = gltf.scene
+            gltf.scene.position.y += 20
+            scene.add( gltf.scene )
+
+            this.#controls = new OrbitControls( camera, renderer.domElement )
+            this.#controls.enabled = false
+            this.#controls.rotate(4, 0.3)
+        })
+
         camera.position.x = 16
         camera.position.y = 20
         camera.position.z = 8
-        camera.rotation.x = -0.2
+
+        const onKeyDown = (event) => {
+            switch(event.code) {
+                case "KeyA":
+                    this.#controls.rotate(-0.1,0)
+                break;
+                case "KeyD":
+                    this.#controls.rotate(0.1,0)
+                break;
+            }
+        }
+        document.addEventListener('keydown', onKeyDown);
     
         const skyColor = 0xB1E1FF
         const groundColor = 0xB97A20
@@ -89,6 +128,8 @@ class GameScreen {
         this.#composer.addPass( bloomPass )
 
         this.#initSound()
+
+        this.#direction = new THREE.Vector3(0,0,0)
     }
 
     /**
@@ -97,30 +138,42 @@ class GameScreen {
      * @param {*} scene 
      * @param {*} camera 
      */
-    animate(scene, camera) {
+    animate(scene, camera, delta) {
+        if(this.#controls){
         updateChunkPosition(scene,
 			this.#noiseBlueprints,
-			this.#chunkPos.set(Math.floor(camera.position.x / 32),
-				Math.floor(camera.position.y / 32),
-				Math.floor(camera.position.z / 32)))
+			this.#chunkPos.set(Math.floor(this.#saucer.position.x / 32),
+				Math.floor(this.#saucer.position.y / 32),
+				Math.floor(this.#saucer.position.z / 32)))
 
-		camera.position.z -= 0.3
+            this.#uniforms.uPlayerPos.value.copy(this.#saucer.position)
 
-		this.#uniforms.uPlayerPos.value.copy(camera.position)
-		this.#uniforms.uPlayerPos.value.copy(camera.position)
+            const freq = (a, b) => this.#musicAnalyzer.getFrequencySlice(this.#audio.currentTime, a, b)
+            this.#uniforms.uBass.value.set(
+                freq(16, 60),
+                freq(60, 250),
+                freq(250, 500),
+                freq(500, 2000))
+            this.#uniforms.uHigh.value.set(
+                freq(2000, 4000),
+                freq(4000, 6000),
+                freq(6000, 20000),
+                128.0)
 
-        const freq = (a, b) => this.#musicAnalyzer.getFrequencySlice(this.#audio.currentTime, a, b)
-		this.#uniforms.uBass.value.set(
-            freq(16, 60),
-            freq(60, 250),
-            freq(250, 500),
-            freq(500, 2000))
-        this.#uniforms.uHigh.value.set(
-            freq(2000, 4000),
-            freq(4000, 6000),
-            freq(6000, 20000),
-            128.0)
-        console.log(this.#uniforms.uBass.value)
+            this.#controls.target = this.#saucer.position
+            this.#controls.update()
+
+            this.#saucer.rotation.y += 0.02 * delta
+
+            this.#direction.copy(camera.position).sub(this.#saucer.position)
+            this.#direction.y = 0
+            this.#direction.normalize()
+            this.#direction.multiplyScalar(-0.01 * delta)
+
+            this.#saucer.position.add(this.#direction)
+            camera.position.add(this.#direction)
+            console.log(this.#saucer.position)
+        }
 
         this.#composer.render()
     }

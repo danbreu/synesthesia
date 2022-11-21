@@ -1,17 +1,16 @@
 import * as THREE from 'three'
+import { Vector3 } from './ext/three.js'
 
 import { getLayeredNoiseShader, getLayeredNoiseTextures } from './noise.js'
 
 export const CHUNK_SIZE = 32
-const RENDER_DIRECTIONS = [new THREE.Vector3(0, 0, -1),
-	new THREE.Vector3(1, 0, -1),
-	new THREE.Vector3(0, 0, 0),
-	new THREE.Vector3(-1, 0, -1),
-	new THREE.Vector3(0, 0, -2),
-	new THREE.Vector3(-1, 0, 0),
-	new THREE.Vector3(-1, 0, -2),
-	new THREE.Vector3(1, 0, 0),
-	new THREE.Vector3(1, 0, -2)]
+const RENDER_DIRECTIONS = []
+const LOOKAHEAD = 3
+for(let i = 0; i < LOOKAHEAD*2+1; i++) {
+	for(let j = 0; j < LOOKAHEAD*2+1; j++) {
+		RENDER_DIRECTIONS.push(new Vector3(-LOOKAHEAD+i, 0, -LOOKAHEAD+j))	
+	}
+}
 let terrainWorker = null
 let meshes = {}
 const currentPosition = new THREE.Vector3(Infinity, Infinity, Infinity)
@@ -111,19 +110,19 @@ export const initShaderMaterial = (noiseBlueprints) => {
 				for(int i = 0; i < 7; i++) {
 					ifl = float(i);
 					if( values[i] > 40.0 && -60.0+20.0*ifl-10.0*values[i]/255.0 < modelPos.x && modelPos.x < -70.0+20.0*ifl+10.0*values[i]/255.0 ) {
-						gl_Position = vec4(-0.01, 1.2, -1.2, 1.0);
+						gl_Position = projectionMatrix * viewMatrix * vec4(uPlayerPos, 1.0);
 						vPos = vec3(1e20);
-						vNormal = vec3(values[i]/512.0);
+						vNormal = vec3(values[i]/1400.0);
 						vPlayerPos = vec3(0.0);
 						return;
 					}
 				}
 			}
 
-			modelPos.y += bassness*sin(dist*bassness/64.0);
+			modelPos.y += bassness*sin(dist*bassness/64.0) - length(modelPos.xz)*0.4;
 
-			vPos = position;
-			vNormal = normalFromNoise(modelPos).xyz;
+			vPos = (modelMatrix*posVec4).xyz;
+			vNormal = normalFromNoise(modelMatrix*posVec4).xyz;
 			vPlayerPos = uPlayerPos;
 			vBass = uBass;
 			vHigh = uHigh;
@@ -143,13 +142,13 @@ export const initShaderMaterial = (noiseBlueprints) => {
 
 		void main() {
 			if(vPos.x >= 1e19 && vPos.y >= 1e19 && vPos.z >= 1e19) {
-				gl_FragColor = vec4(1.0, length(vNormal), 1.0, 1.0);
+				gl_FragColor = vec4(1.0, length(vNormal), 1.0, length(vNormal));
 				return;
 			}
 
 			vec3 objectColor = vec3(1.0, 1.0, 1.0);
-			vec3 lightPos = vec3(0.0, 8.0, 0.0);
-			vec3 lightColor = vec3(0.0, 1.0, 0.0);
+			vec3 lightPos = vPlayerPos + vec3(0.0, -12.0, 0.0);//vec3(0.0, 8.0, 0.0);
+			vec3 lightColor = vec3(0.0, 0.8, 0.0);
 			float ambientStrength = 0.1*vBassness;
 			vec3 ambient = ambientStrength * lightColor;
 
@@ -162,7 +161,8 @@ export const initShaderMaterial = (noiseBlueprints) => {
 			vec3 result = (ambient + diffuse) * objectColor;
 			gl_FragColor = vec4(result, 1.0);
 		}
-		`
+		`,
+		transparent: true
 	})
 
 	return uniforms

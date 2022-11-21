@@ -2,6 +2,8 @@ import * as THREE from 'three'
 import StartScreen from './start_screen.js'
 import WavDecoder from './wavDecoder.js'
 
+const MILLIS_PER_FRAME = 1000/24
+
 const startScreen = StartScreen
 
 /**
@@ -9,8 +11,7 @@ const startScreen = StartScreen
  */
 async function main () {
 	const assetLocations = {
-		'./music/mandragora.wav': null,
-		//'./assets/lightbulb.glb': null
+		'./music/mandragora.wav': null
 	}
 	
 	await fetchAssets(assetLocations)
@@ -80,11 +81,23 @@ const initThree = (start) => {
 		}
 	}
 
+	let delta = MILLIS_PER_FRAME
+	let last = 0
 	const animate = () => {
-		current.animate(scene, camera)
+		if (MILLIS_PER_FRAME > performance.now() - last) {
+			setTimeout(animate, 5)
+			return
+		}
 
-		resizeCanvasToWindowSize()
+		delta = performance.now() - last;
+
+		if (delta >= MILLIS_PER_FRAME) {
+			last = performance.now();
+			current.animate(scene, camera, delta)
+		}
+
 		requestAnimationFrame(animate)
+		resizeCanvasToWindowSize()
 	}
 	animate()
 }
