@@ -1,4 +1,4 @@
-import { Matrix4, Vector3, Vector2, Euler, Scene, PerspectiveCamera, WebGLRenderer, HemisphereLight, PointLight } from 'three'
+import * as THREE from 'three'
 import MusicAnalyzer from './musicAnalyzer.js'
 import { noiseBlueprint, bufferNoise, getLayeredNoise, getLayeredNoiseShader } from './noise.js'
 import { findStartingLocation, initShaderMaterial, updateChunkPosition } from './terrain.js'
@@ -37,8 +37,8 @@ const initMusicAnalyzer = async () => {
 }
 
 const initNoise = () => {
-	const blueprints = [noiseBlueprint(new Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new Matrix4().makeTranslation(4, 4, 4), 8),
-		noiseBlueprint(new Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new Matrix4().makeScale(1, 0, 1), 8)]
+	const blueprints = [noiseBlueprint(new THREE.Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new THREE.Matrix4().makeTranslation(4, 4, 4), 8),
+		noiseBlueprint(new THREE.Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new THREE.Matrix4().makeScale(1, 0, 1), 8)]
 	console.log(getLayeredNoiseShader(blueprints))
 	blueprints.forEach(bufferNoise)
 	const fun = getLayeredNoise(blueprints)
@@ -56,8 +56,8 @@ const nextPos = (pos, dir) => {
  * Casts a ray from position in direction using ray marching on terrainFunction
  *
  * @param {(x, y, z) => number} terrainFunction Geometry defined implicitly using (distanceish) scalar field
- * @param {Vector3} position Position to cast the ray from
- * @param {Vector3} direction Direction to cast the ray in
+ * @param {THREE.Vector3} position Position to cast the ray from
+ * @param {THREE.Vector3} direction Direction to cast the ray in
  * @param {number} noSamples Maximum amount of times the ray is advanced
  * @param {number} isoLevel Level below which an object exist at point
  * @returns number
@@ -79,12 +79,12 @@ const marchRay = (terrainFunction, position, direction, noSamples = 10, isoLevel
 
 const coneAngle = 4
 const samples = 40
-const buffer = new Vector3(0, 0, 0)
-const startingPoint = new Vector3()
-const bufferEuler = new Euler()
-const topEuler = new Euler()
-const topDirection = new Vector3()
-const angularVelocity = new Euler(0.2, 0.2, 0)
+const buffer = new THREE.Vector3(0, 0, 0)
+const startingPoint = new THREE.Vector3()
+const bufferEuler = new THREE.Euler()
+const topEuler = new THREE.Euler()
+const topDirection = new THREE.Vector3()
+const angularVelocity = new THREE.Euler(0.2, 0.2, 0)
 const lookNext = (terrainFunction, camera) => {
 	camera.getWorldDirection(buffer)
 
@@ -145,8 +145,8 @@ const lookNext = (terrainFunction, camera) => {
 }
 
 const initThree = () => {
-	const scene = new Scene()
-	const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+	const scene = new THREE.Scene()
+	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
 	scene.add(camera)
 
 	const canvas = document.createElement('canvas')
@@ -154,7 +154,7 @@ const initThree = () => {
 	if (!context) {
 		alert('WebGL 2 is required for running this application')
 	}
-	const renderer = new WebGLRenderer({ canvas, context })
+	const renderer = new THREE.WebGLRenderer({ canvas, context })
 	renderer.setSize(window.innerWidth, window.innerHeight)
 	document.body.appendChild(renderer.domElement)
 
@@ -166,15 +166,15 @@ const initThree = () => {
 
 	const skyColor = 0xB1E1FF
 	const groundColor = 0xB97A20
-	const hemisphere = new HemisphereLight(skyColor, groundColor, 0.2)
-	const point = new PointLight(0xFFFFFF, 0.8)
+	const hemisphere = new THREE.HemisphereLight(skyColor, groundColor, 0.2)
+	const point = new THREE.PointLight(0xFFFFFF, 0.8)
 	point.position.y += 2
 	scene.add(hemisphere)
 	camera.add(point)
 
 	const renderScene = new RenderPass( scene, camera )
 
-	const bloomPass = new UnrealBloomPass( new Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 )
+	const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 )
 	bloomPass.threshold = 0.078
 	bloomPass.strength = 1
 	bloomPass.radius = 0.7
@@ -196,7 +196,7 @@ const initThree = () => {
 		}
 	}
 
-	const pos = new Vector3()
+	const pos = new THREE.Vector3()
 	const animate = () => {
 		updateChunkPosition(scene,
 			noiseBlueprints,
