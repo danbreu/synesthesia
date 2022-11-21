@@ -3,9 +3,12 @@ const path = require('path')
 const logger = require('morgan')
 const compression = require('compression')
 const nocache = require('nocache')
+const cors = require('cors')
+
 
 const server = express()
 
+server.use(cors())
 server.use(nocache())
 server.use(compression({ filter: shouldCompress }))
 server.use(logger('dev'))
