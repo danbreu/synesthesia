@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import StartScreen from './start_screen.js'
 import WavDecoder from './wavDecoder.js'
 
-const MILLIS_PER_FRAME = 1000/24
+const MILLIS_PER_FRAME = 1000 / 24
 
 const startScreen = StartScreen
 
@@ -11,12 +11,13 @@ const startScreen = StartScreen
  */
 async function main () {
 	const assetLocations = {
-		'./music/mandragora.wav': null
+		'./music/mandragora.wav': null,
+		'./assets/Crawfish.glb': null
 	}
-	
+
 	await fetchAssets(assetLocations)
 
-	const file = new File([assetLocations["./music/mandragora.wav"]], 'mandragora.wav', { type: 'audio/wav' })
+	const file = new File([assetLocations['./music/mandragora.wav']], 'mandragora.wav', { type: 'audio/wav' })
 
 	const wavDecoder = new WavDecoder(file)
 	await wavDecoder.start()
@@ -41,10 +42,8 @@ const fetchAssets = async (assets) => {
 		assets[asset] = blob
 	})
 
-	
 	return Promise.all(assetPromises)
 }
-
 
 const initThree = (start) => {
 	const scene = new THREE.Scene()
@@ -89,10 +88,10 @@ const initThree = (start) => {
 			return
 		}
 
-		delta = performance.now() - last;
+		delta = performance.now() - last
 
 		if (delta >= MILLIS_PER_FRAME) {
-			last = performance.now();
+			last = performance.now()
 			current.animate(scene, camera, delta, last)
 		}
 

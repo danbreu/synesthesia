@@ -5,7 +5,6 @@ const compression = require('compression')
 const nocache = require('nocache')
 const cors = require('cors')
 
-
 const server = express()
 
 server.use(cors())

@@ -6,9 +6,9 @@ import { getLayeredNoiseShader, getLayeredNoiseTextures } from './noise.js'
 export const CHUNK_SIZE = 32
 const RENDER_DIRECTIONS = []
 const LOOKAHEAD = 3
-for(let i = 0; i < LOOKAHEAD*2+1; i++) {
-	for(let j = 0; j < LOOKAHEAD*2+1; j++) {
-		RENDER_DIRECTIONS.push(new Vector3(-LOOKAHEAD+i, 0, -LOOKAHEAD+j))	
+for (let i = 0; i < LOOKAHEAD * 2 + 1; i++) {
+	for (let j = 0; j < LOOKAHEAD * 2 + 1; j++) {
+		RENDER_DIRECTIONS.push(new Vector3(-LOOKAHEAD + i, 0, -LOOKAHEAD + j))
 	}
 }
 let terrainWorker = null
@@ -43,21 +43,20 @@ const STEP_SIZE = 0.5
 
 /**
  * Init the shader material used for rendering the terrain.
- * 
+ *
  * Contains uniforms for music amplitutes and player position.
- * 
- * @param {Array} noiseBlueprints 
- * @returns 
+ *
+ * @param {Array} noiseBlueprints
+ * @returns
  */
 export const initShaderMaterial = (noiseBlueprints) => {
 	const shader = getLayeredNoiseShader(noiseBlueprints)
 	const uniforms = getLayeredNoiseTextures(noiseBlueprints)
-	uniforms["uPlayerPos"] = new THREE.Uniform( new THREE.Vector3(0.0, 0.0, 0.0))
-	uniforms["uBassness"] = {type: "f", value: 0.0}
-	uniforms["uHightness"] = {type: "f", value: 0.0}
-	uniforms["uBass"] = new THREE.Uniform( new THREE.Vector4(0.0, 0.0, 0.0, 0.0))
-	uniforms["uHigh"] = new THREE.Uniform( new THREE.Vector4(0.0, 0.0, 0.0, 0.0))
-
+	uniforms.uPlayerPos = new THREE.Uniform(new THREE.Vector3(0.0, 0.0, 0.0))
+	uniforms.uBassness = { type: 'f', value: 0.0 }
+	uniforms.uHightness = { type: 'f', value: 0.0 }
+	uniforms.uBass = new THREE.Uniform(new THREE.Vector4(0.0, 0.0, 0.0, 0.0))
+	uniforms.uHigh = new THREE.Uniform(new THREE.Vector4(0.0, 0.0, 0.0, 0.0))
 
 	material = new THREE.ShaderMaterial({
 		uniforms,
@@ -169,15 +168,15 @@ export const initShaderMaterial = (noiseBlueprints) => {
 /**
  * Initialize a worker which builds the terrain defined via noiseBlueprints
  * using the marching cubes algorithm.
- * 
+ *
  * If the worker finished a terrain piece it is created via the createChunk function.
- * 
+ *
  * @param {*} scene Scene terrain pieces are placed on
  * @param {*} noiseBlueprints Noise blueprints defining the terrain
  * @param {*} setNoiseCallback Called when the noise is buffered on the worker thread
- * @returns 
+ * @returns
  */
- export const initTerrainWorker = (scene, noiseBlueprints, setNoiseCallback) => {
+export const initTerrainWorker = (scene, noiseBlueprints, setNoiseCallback) => {
 	terrainWorker = new Worker('terrain_worker.js', { type: 'module' })
 
 	terrainWorker.onmessage = (message) => {
@@ -200,9 +199,9 @@ export const initShaderMaterial = (noiseBlueprints) => {
 
 /**
  * Function called when a chunk mesh is generated.
- * 
+ *
  * Chunks are kept track of via the meshes object.
- * 
+ *
  * @param {*} scene Scene chunk is placed in
  * @param {*} buffer Buffer containing the chunk vertices coming from the caller
  * @param {*} position Chunk position to place chunk at
@@ -223,11 +222,11 @@ const createChunk = (scene, buffer, position) => {
 /**
  * Update center position on chunk grid.
  * The chunks around this center are shown. (Relative positions defined by RENDER_DIRECTIONS)
- *  
+ *
  * @param {*} scene Scene chunks are shown on
  * @param {*} noiseBlueprints Noise blueprints defining the terrain
  * @param {*} position Position in chunk coordinates floor(playerCoordinates)/CHUNK_SIZE
- * @returns 
+ * @returns
  */
 export const updateChunkPosition = (scene, noiseBlueprints, position) => {
 	if (position.equals(currentPosition)) return
