@@ -69,50 +69,50 @@ export const initShaderMaterial = (noiseBlueprints) => {
 	material = new THREE.ShaderMaterial({
 		uniforms,
 		vertexShader: `
-    precision mediump sampler3D;
-    precision mediump float;
+		precision mediump sampler3D;
+		precision mediump float;
 
-    out vec3 vPos;
-    out vec3 vNormal;
+		out vec3 vPos;
+		out vec3 vNormal;
 
-    ${shader}
+		${shader}
 
-    vec4 normalFromNoise(vec4 pos) {
-      float s = sampleNoise(pos);
-      return vec4(sampleNoise(pos+vec4(1.0,0.0,0.0,1.0))-s,
-        sampleNoise(pos+vec4(0.0,1.0,0.0,1.0))-s,
-        sampleNoise(pos+vec4(0.0,0.0,1.0,1.0))-s,
-        1.0);
-    } 
-  
-    void main() {
-      vec4 posVec4 = vec4( position, 1.0 );
-      vec4 modelPos = modelViewMatrix * posVec4;
-      vPos = position;
-      vNormal = normalFromNoise(modelPos).xyz;
-      gl_Position = projectionMatrix * modelPos;
-    }
-    `,
+		vec4 normalFromNoise(vec4 pos) {
+			float s = sampleNoise(pos);
+			return vec4(sampleNoise(pos+vec4(1.0,0.0,0.0,1.0))-s,
+				sampleNoise(pos+vec4(0.0,1.0,0.0,1.0))-s,
+				sampleNoise(pos+vec4(0.0,0.0,1.0,1.0))-s,
+				1.0);
+		}
+
+		void main() {
+			vec4 posVec4 = vec4( position, 1.0 );
+			vec4 modelPos = modelViewMatrix * posVec4;
+			vPos = position;
+			vNormal = normalFromNoise(modelPos).xyz;
+			gl_Position = projectionMatrix * modelPos;
+		}
+		`,
 		fragmentShader: `
-    in vec3 vPos;
-    in vec3 vNormal;
-    
-    void main() {
-      vec3 objectColor = vec3(1.0, 1.0, 1.0);
-      vec3 lightPos = vec3(5.0, 10.0, 0.0);
-      vec3 lightColor = vec3(0.0, 1.0, 0.0);
-      float ambientStrength = 0.1;
-      vec3 ambient = ambientStrength * lightColor;
-      
-      // diffuse
-      vec3 norm = normalize(vNormal);
-      vec3 lightDir = normalize(lightPos - vPos);
-      float diff = max(dot(norm, lightDir), 0.0);
-      vec3 diffuse = diff * lightColor;
-              
-      vec3 result = (ambient + diffuse) * objectColor;
-      gl_FragColor = vec4(result, 1.0);    
-    } `
+		in vec3 vPos;
+		in vec3 vNormal;
+
+		void main() {
+			vec3 objectColor = vec3(1.0, 1.0, 1.0);
+			vec3 lightPos = vec3(5.0, 10.0, 0.0);
+			vec3 lightColor = vec3(0.0, 1.0, 0.0);
+			float ambientStrength = 0.1;
+			vec3 ambient = ambientStrength * lightColor;
+
+			// diffuse
+			vec3 norm = normalize(vNormal);
+			vec3 lightDir = normalize(lightPos - vPos);
+			float diff = max(dot(norm, lightDir), 0.0);
+			vec3 diffuse = diff * lightColor;
+
+			vec3 result = (ambient + diffuse) * objectColor;
+			gl_FragColor = vec4(result, 1.0);
+		} `
 	})
 }
 
