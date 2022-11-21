@@ -5,6 +5,7 @@ import GameScreen from './game_screen.js'
 
 class StartScreen {
     #nextScreenCallback
+    #assetLocations
     #composer
     #renderer
     #clock = new THREE.Clock()
@@ -12,8 +13,8 @@ class StartScreen {
     #particlesMesh
     #mouseMoveX
     #mouseMoveY
-    constructor() {
-
+    constructor(assetLocations) {
+        this.#assetLocations = assetLocations
     }
 
     /**
@@ -36,22 +37,6 @@ class StartScreen {
 
         const particlesGeonometry = new THREE.BufferGeometry;
         const particlesCnt = 7000;
-
-        var mtlLoader = new MTLLoader();
-        mtlLoader.setTexturePath("./assets/")
-        mtlLoader.setPath("./assets/")
-        mtlLoader.load("crayfish.mtl", function(materials){
-            materials.preload();
-
-            var objLoader = new OBJLoader()
-            objLoader.setMaterials(materials)
-            objLoader.setPath("./assets/")
-            objLoader.load("crayfish.obj", function(Object){
-                object.position.y = 0;
-                scene.add(object)
-            })
-        })
-
 
         //Array for the 3d xyz cords
         const posArray = new Float32Array(particlesCnt * 3)
@@ -111,7 +96,7 @@ class StartScreen {
      */
     animate(scene, camera) {
         if (false){
-        this.#nextScreenCallback(new GameScreen())}
+        this.#nextScreenCallback(new GameScreen(this.#assetLocations))}
         
         const elapsedTime = this.#clock.getElapsedTime()
 

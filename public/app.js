@@ -1,5 +1,8 @@
 import * as THREE from 'three'
 import StartScreen from './start_screen.js'
+import WavDecoder from './wavDecoder.js'
+
+const MILLIS_PER_FRAME = 1000/24
 
 const startScreen = StartScreen
 
@@ -7,9 +10,41 @@ const startScreen = StartScreen
  * Main entry point of the application.
  */
 async function main () {
-	const start = new startScreen()
+	const assetLocations = {
+		'./music/mandragora.wav': null
+	}
+	
+	await fetchAssets(assetLocations)
+
+	const file = new File([assetLocations["./music/mandragora.wav"]], 'mandragora.wav', { type: 'audio/wav' })
+
+	const wavDecoder = new WavDecoder(file)
+	await wavDecoder.start()
+	assetLocations.wavDecoder = wavDecoder
+
+	const start = new startScreen(assetLocations)
 	initThree(start)
 }
+
+/**
+ * Fetch assets from server and create ObjectURLs
+ *
+ * @param {string[]} assets
+ * @returns {Promise<{[key: string]: string}>} ObjectURLs
+ * @throws {Error} If any asset could not be loaded
+ * @throws {TypeError} If assets is not an array
+ */
+const fetchAssets = async (assets) => {
+	const assetPromises = Object.keys(assets).map(async (asset) => {
+		const response = await fetch(asset)
+		const blob = await response.blob()
+		assets[asset] = blob
+	})
+
+	
+	return Promise.all(assetPromises)
+}
+
 
 const initThree = (start) => {
 	const scene = new THREE.Scene()
@@ -17,7 +52,7 @@ const initThree = (start) => {
 	scene.add(camera)
 
 	const canvas = document.createElement('canvas')
-	const context = canvas.getContext('webgl2', { alpha: false })
+	const context = canvas.getContext('webgl2', { alpha: false, antialias: true })
 	if (!context) {
 		alert('WebGL 2 is required for running this application')
 	}
@@ -46,11 +81,23 @@ const initThree = (start) => {
 		}
 	}
 
-	const animate = () => {	
-		current.animate(scene, camera)
+	let delta = MILLIS_PER_FRAME
+	let last = 0
+	const animate = () => {
+		if (MILLIS_PER_FRAME > performance.now() - last) {
+			setTimeout(animate, 5)
+			return
+		}
 
-		resizeCanvasToWindowSize()
+		delta = performance.now() - last;
+
+		if (delta >= MILLIS_PER_FRAME) {
+			last = performance.now();
+			current.animate(scene, camera, delta, last)
+		}
+
 		requestAnimationFrame(animate)
+		resizeCanvasToWindowSize()
 	}
 	animate()
 }

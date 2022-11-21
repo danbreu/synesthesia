@@ -25,6 +25,19 @@ class OrbitControls extends EventDispatcher {
 
 		super();
 
+		this.rotate = function(rotateX, rotateY) {
+			// rotateX angle to mouse X
+			let element = scope.domElement;
+			let x = (rotateX * element.clientHeight) / (Math.PI * 2);
+			// rotateY angle to mouse Y
+			let y = (rotateY * element.clientHeight) / (Math.PI * 2);
+			// Add to previous mouse point
+			x = rotateStart.x + x;
+			y = rotateStart.y + y;
+			handleMouseMoveRotate({clientX: x, clientY: y});
+		 }
+			 
+
 		this.object = object;
 		this.domElement = domElement;
 		this.domElement.style.touchAction = 'none'; // disable touch scroll
