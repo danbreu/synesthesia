@@ -93,7 +93,7 @@ const initThree = (start) => {
 
 		if (delta >= MILLIS_PER_FRAME) {
 			last = performance.now();
-			current.animate(scene, camera, delta)
+			current.animate(scene, camera, delta, last)
 		}
 
 		requestAnimationFrame(animate)
