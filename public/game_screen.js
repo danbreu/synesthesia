@@ -40,9 +40,9 @@ class GameScreen {
      * @param {*} scene 
      * @param {*} camera 
      * @param {*} renderer 
-     * @param {*} nextSceneCallback 
+     * @param {*} nextScreenCallback 
      */
-    init(scene, camera, renderer, nextSceneCallback) {
+    init(scene, camera, renderer, nextScreenCallback) {
         const [noiseBlueprints, noiseFunction] = this.#initNoise()
         this.#noiseBlueprints = noiseBlueprints
         this.#noiseFunction = noiseFunction

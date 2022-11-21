@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import GameScreen from './game_screen.js'
 
 class StartScreen {
-    #nextSceneCallback
+    #nextScreenCallback
 
     constructor() {
 
@@ -14,10 +14,10 @@ class StartScreen {
      * @param {*} scene 
      * @param {*} camera 
      * @param {*} renderer 
-     * @param {*} nextSceneCallback 
+     * @param {*} nextScreenCallback 
      */
-    init(scene, camera, renderer, nextSceneCallback) {
-        this.#nextSceneCallback = nextSceneCallback
+    init(scene, camera, renderer, nextScreenCallback) {
+        this.#nextScreenCallback = nextScreenCallback
     }
 
     /**
@@ -27,7 +27,7 @@ class StartScreen {
      * @param {*} camera 
      */
     animate(scene, camera) {
-        this.#nextSceneCallback(new GameScreen())
+        this.#nextScreenCallback(new GameScreen())
     }
 }
 
