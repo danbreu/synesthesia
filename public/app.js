@@ -198,7 +198,6 @@ const initThree = () => {
 
 	const pos = new THREE.Vector3()
 	const animate = () => {
-		if (onclick = true) {
 		updateChunkPosition(scene,
 			noiseBlueprints,
 			pos.set(Math.floor(camera.position.x / 32),
@@ -214,7 +213,6 @@ const initThree = () => {
 		requestAnimationFrame(animate)
 		composer.render()
 	}
-
 	animate()
 }
 
