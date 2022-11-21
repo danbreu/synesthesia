@@ -57,7 +57,7 @@ class GameScreen {
         const url = URL.createObjectURL(this.#assetLocations["./music/mandragora.wav"])
         this.#audio = new Audio(url)
         this.#audio.play()
-        this.#audio.currentTime = 100
+        this.#audio.currentTime = 26
     }
 
     /**
@@ -151,7 +151,7 @@ class GameScreen {
     
         const skyColor = 0xFFFFFF
         const groundColor = 0x003300
-        const hemisphere = new THREE.HemisphereLight(skyColor, groundColor, 0.95)
+        const hemisphere = new THREE.HemisphereLight(skyColor, groundColor, 2.2)
         scene.add(hemisphere)
     
         const renderScene = new RenderPass( scene, camera )
@@ -166,7 +166,7 @@ class GameScreen {
         this.#composer.addPass( bloomPass )
 
         this.#initSound(nextScreenCallback)
-        this.#audio.onended = () => nextScreenCallback(new StartScreen(this.#assetLocations))
+        this.#audio.onended = document.location.reload
 
         this.#direction = new THREE.Vector3(0,0,0)
 
