@@ -53,7 +53,6 @@ export const initShaderMaterial = (noiseBlueprints) => {
 	const shader = getLayeredNoiseShader(noiseBlueprints)
 	const uniforms = getLayeredNoiseTextures(noiseBlueprints)
 	uniforms["uPlayerPos"] = new THREE.Uniform( new THREE.Vector3(0.0, 0.0, 0.0))
-	uniforms["uBassBoomPos"] = new THREE.Uniform( new THREE.Vector3(0.0, 0.0, 0.0))
 	uniforms["uBassness"] = {type: "f", value: 0.0}
 	uniforms["uHightness"] = {type: "f", value: 0.0}
 	uniforms["uBass"] = new THREE.Uniform( new THREE.Vector4(0.0, 0.0, 0.0, 0.0))
@@ -67,7 +66,6 @@ export const initShaderMaterial = (noiseBlueprints) => {
 		precision mediump float;
 
 		uniform vec3 uPlayerPos;
-		uniform vec3 uBassBoomPos;
 
 		uniform vec4 uBass;
 		uniform vec4 uHigh;
@@ -119,7 +117,7 @@ export const initShaderMaterial = (noiseBlueprints) => {
 				}
 			}
 
-			modelPos.y += bassness*sin(dist*bassness/64.0) - length(modelPos.xz)*0.4;
+			modelPos.y += bassness*sin(dist*bassness/32.0) - length(modelPos.xz)*0.4;
 
 			vPos = (modelMatrix*posVec4).xyz;
 			vNormal = normalFromNoise(modelMatrix*posVec4).xyz;
@@ -147,7 +145,7 @@ export const initShaderMaterial = (noiseBlueprints) => {
 			}
 
 			vec3 objectColor = vec3(1.0, 1.0, 1.0);
-			vec3 lightPos = vPlayerPos + vec3(0.0, -12.0, 0.0);//vec3(0.0, 8.0, 0.0);
+			vec3 lightPos = vPlayerPos + vec3(0.0, -10.0, 0.0);//vec3(0.0, 8.0, 0.0);
 			vec3 lightColor = vec3(0.0, 0.8, 0.0);
 			float ambientStrength = 0.1*vBassness;
 			vec3 ambient = ambientStrength * lightColor;

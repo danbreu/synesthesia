@@ -8,6 +8,7 @@ import { UnrealBloomPass } from './ext/threeAddons/postprocessing/UnrealBloomPas
 import { GLTFLoader } from './ext/threeAddons/loaders/GLTFLoader.js'
 import { OrbitControls } from './ext/threeAddons/controls/OrbitControls.js';
 import MusicAnalyzer from './musicAnalyzer.js'
+import StartScreen from './start_screen.js'
 
 class GameScreen {
     #chunkPos = new THREE.Vector3()
@@ -19,8 +20,11 @@ class GameScreen {
     #audio
     #musicAnalyzer
     #controls
+    #angularVelocity
+    #angularAccel
     #saucer
     #direction
+    #stars
 
     constructor(assetLocations) {
         this.#assetLocations = assetLocations
@@ -33,11 +37,12 @@ class GameScreen {
      */
     #initNoise() {
         const blueprints = [noiseBlueprint(new THREE.Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new THREE.Matrix4().makeTranslation(4, 4, 4), 8),
-            noiseBlueprint(new THREE.Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new THREE.Matrix4().makeScale(1, 0, 1), 8)]
+            noiseBlueprint(new THREE.Matrix4().makeScale(2, 1, 1).multiplyScalar(0.1), new THREE.Matrix4().makeScale(1, 0, 1), 8),
+            noiseBlueprint(new THREE.Matrix4().multiplyScalar(0.07), new THREE.Matrix4().makeTranslation(8, 8, 8), 4),
+            noiseBlueprint(new THREE.Matrix4().multiplyScalar(0.15), new THREE.Matrix4(), 0.2)]
         console.log(getLayeredNoiseShader(blueprints))
         blueprints.forEach(bufferNoise)
         const fun = getLayeredNoise(blueprints)
-        // const start = findStartingLocation(fun, 5, 5, 5)
     
         return [blueprints, fun]
     }
@@ -67,6 +72,32 @@ class GameScreen {
         } );
     }
 
+    #initStars(scene) {
+        const particlesGeonometry = new THREE.BufferGeometry();
+        const particlesCnt = 7000;
+
+        //Array for the 3d xyz cords
+        const posArray = new Float32Array(particlesCnt * 3)
+
+        const distance = new THREE.Vector3(1000, 0, 0)
+        const rot = new THREE.Euler()
+        for(let i = 0; i < particlesCnt; i+=3){
+            distance.applyEuler(rot.set(Math.random()*Math.PI*2,Math.random()*Math.PI*2,0))
+            posArray[i] = distance.x
+            posArray[i+1] = distance.y
+            posArray[i+2] = distance.z
+        }
+
+        particlesGeonometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3))
+
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.6
+            }
+        )
+        this.#stars = new THREE.Points(particlesGeonometry, particlesMaterial)
+        scene.add(this.#stars)
+    }
+
     /**
      * Initialize the game screen
      * 
@@ -84,7 +115,7 @@ class GameScreen {
         this.#initSaucer((gltf) => {
             gltf.scene.scale.multiplyScalar(0.01)
             this.#saucer = gltf.scene
-            gltf.scene.position.y += 20
+            gltf.scene.position.y += 18
             scene.add( gltf.scene )
 
             this.#controls = new OrbitControls( camera, renderer.domElement )
@@ -93,28 +124,35 @@ class GameScreen {
         })
 
         camera.position.x = 16
-        camera.position.y = 20
+        camera.position.y = 18
         camera.position.z = 8
 
-        const onKeyDown = (event) => {
+        this.#angularAccel = 0
+        this.#angularVelocity = 0
+        document.addEventListener('keydown', (event) => {
             switch(event.code) {
                 case "KeyA":
-                    this.#controls.rotate(-0.1,0)
+                    this.#angularAccel = -0.0001
                 break;
                 case "KeyD":
-                    this.#controls.rotate(0.1,0)
+                    this.#angularAccel = 0.0001
                 break;
             }
-        }
-        document.addEventListener('keydown', onKeyDown);
+        })
+        document.addEventListener('keyup', (event) => {
+            switch(event.code) {
+                case "KeyA":
+                case "KeyD":
+                    this.#angularAccel = 0
+                    this.#angularAccel = 0
+                break;
+            }
+        })
     
-        const skyColor = 0xB1E1FF
-        const groundColor = 0xB97A20
-        const hemisphere = new THREE.HemisphereLight(skyColor, groundColor, 0.2)
-        const point = new THREE.PointLight(0xFFFFFF, 0.8)
-        point.position.y += 2
+        const skyColor = 0xFFFFFF
+        const groundColor = 0x003300
+        const hemisphere = new THREE.HemisphereLight(skyColor, groundColor, 0.95)
         scene.add(hemisphere)
-        camera.add(point)
     
         const renderScene = new RenderPass( scene, camera )
     
@@ -127,9 +165,12 @@ class GameScreen {
         this.#composer.addPass( renderScene )
         this.#composer.addPass( bloomPass )
 
-        this.#initSound()
+        this.#initSound(nextScreenCallback)
+        this.#audio.onended = () => nextScreenCallback(new StartScreen(this.#assetLocations))
 
         this.#direction = new THREE.Vector3(0,0,0)
+
+        this.#initStars(scene)
     }
 
     /**
@@ -138,7 +179,7 @@ class GameScreen {
      * @param {*} scene 
      * @param {*} camera 
      */
-    animate(scene, camera, delta) {
+    animate(scene, camera, delta, now) {
         if(this.#controls){
         updateChunkPosition(scene,
 			this.#noiseBlueprints,
@@ -160,19 +201,30 @@ class GameScreen {
                 freq(6000, 20000),
                 128.0)
 
+            // View rotation
             this.#controls.target = this.#saucer.position
             this.#controls.update()
 
-            this.#saucer.rotation.y += 0.02 * delta
+            this.#angularVelocity += this.#angularAccel * delta
+            this.#angularVelocity *= 0.5
+
+            this.#controls.rotate(this.#angularVelocity * delta, 0)
+
+            // Forward
+            this.#saucer.position.add(this.#direction)
+            camera.position.add(this.#direction)
+            this.#stars.position.add(this.#direction)
 
             this.#direction.copy(camera.position).sub(this.#saucer.position)
             this.#direction.y = 0
             this.#direction.normalize()
             this.#direction.multiplyScalar(-0.01 * delta)
 
-            this.#saucer.position.add(this.#direction)
-            camera.position.add(this.#direction)
-            console.log(this.#saucer.position)
+            // Visual rotation
+            this.#saucer.rotation.y += 0.02 * delta
+
+            camera.rotation.x += (-128+freq(16, 2000))/10000
+            camera.rotation.y += (-128+freq(40, 1300))/10000
         }
 
         this.#composer.render()
