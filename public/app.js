@@ -7,9 +7,32 @@ const startScreen = StartScreen
  * Main entry point of the application.
  */
 async function main () {
+	const assetUrls = await fetchAssets([
+		'./music/madragora.wav',
+		'./assets/lightbulb.glb'
+	])
+
 	const start = new startScreen()
 	initThree(start)
 }
+
+/**
+ * Fetch assets from server and create ObjectURLs
+ *
+ * @param {string[]} assets
+ * @returns {Promise<{[key: string]: string}>} ObjectURLs
+ * @throws {Error} If any asset could not be loaded
+ * @throws {TypeError} If assets is not an array
+ */
+const fetchAssets = async (assets) => {
+	const assetPromises = assets.map(async (asset) => {
+		const response = await fetch(asset)
+		const blob = await response.blob()
+		return URL.createObjectURL(blob)
+	})
+	return Promise.all(assetPromises)
+}
+
 
 const initThree = (start) => {
 	const scene = new THREE.Scene()
@@ -17,7 +40,7 @@ const initThree = (start) => {
 	scene.add(camera)
 
 	const canvas = document.createElement('canvas')
-	const context = canvas.getContext('webgl2', { alpha: false })
+	const context = canvas.getContext('webgl2', { alpha: false, antialias: true })
 	if (!context) {
 		alert('WebGL 2 is required for running this application')
 	}
@@ -46,7 +69,7 @@ const initThree = (start) => {
 		}
 	}
 
-	const animate = () => {	
+	const animate = () => {
 		current.animate(scene, camera)
 
 		resizeCanvasToWindowSize()
