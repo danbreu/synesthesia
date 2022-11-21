@@ -1,4 +1,4 @@
-import * as THREE from './ext/three.js'
+import * as THREE from 'three'
 
 import { getLayeredNoiseShader, getLayeredNoiseTextures } from './noise.js'
 

@@ -1,4 +1,4 @@
-import { Matrix4, Vector3, Euler, Scene, PerspectiveCamera, WebGLRenderer, HemisphereLight, PointLight } from './ext/three.js'
+import { Matrix4, Vector3, Euler, Scene, PerspectiveCamera, WebGLRenderer, HemisphereLight, PointLight } from 'three'
 import MusicAnalyzer from './musicAnalyzer.js'
 import { noiseBlueprint, bufferNoise, getLayeredNoise, getLayeredNoiseShader } from './noise.js'
 import { findStartingLocation, initShaderMaterial, updateChunkPosition } from './terrain.js'

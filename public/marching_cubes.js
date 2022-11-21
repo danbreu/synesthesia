@@ -1,5 +1,3 @@
-import * as THREE from './ext/three.js'
-
 /**
  * Poligonise scalar field using marching cubes on the CPU
  */
