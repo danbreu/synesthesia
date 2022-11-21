@@ -52,7 +52,6 @@ const initThree = (start) => {
 		resizeCanvasToWindowSize()
 		requestAnimationFrame(animate)
 	}
-
 	animate()
 }
 
