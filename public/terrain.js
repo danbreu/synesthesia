@@ -102,8 +102,8 @@ export const initShaderMaterial = (noiseBlueprints) => {
 			vec4 modelPos = modelViewMatrix * posVec4;
 			float dist = length(modelPos.xz);
 			modelPos.y -= dist*0.1;
-			if(dist>${(CHUNK_SIZE*2).toFixed(1)}) {
-				gl_Position = vec4(0.0);
+			if(modelPos.z + 64.0 < 0.01 && modelPos.x > 10.0) {
+				gl_Position = vec4(0.0, 0.1, 0.0, 1.0);
 				return;
 			}
 			vPos = position;
