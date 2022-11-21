@@ -46,10 +46,6 @@ const fetchAssets = async (assets) => {
 }
 
 const initThree = (start) => {
-	const scene = new THREE.Scene()
-	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-	scene.add(camera)
-
 	const canvas = document.createElement('canvas')
 	const context = canvas.getContext('webgl2', { alpha: false, antialias: true })
 	if (!context) {
@@ -59,8 +55,14 @@ const initThree = (start) => {
 	renderer.setSize(window.innerWidth, window.innerHeight)
 	document.body.appendChild(renderer.domElement)
 
+	let scene = null
+	let camera = null
 	let current = null
 	const init = (screen) => {
+		scene = new THREE.Scene()
+		camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+		scene.add(camera)
+
 		screen.init(scene, camera, renderer, init)
 		current = screen
 	}
