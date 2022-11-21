@@ -1,6 +1,4 @@
-( function () {
-
-	/**
+/**
  * Simple fake tilt-shift effect, modulating two pass Gaussian blur (see above) by vertical position
  *
  * - 9 samples per pass
@@ -9,19 +7,17 @@
  * - "r" parameter control where "focused" horizontal line lies
  */
 
-	const HorizontalTiltShiftShader = {
-		uniforms: {
-			'tDiffuse': {
-				value: null
-			},
-			'h': {
-				value: 1.0 / 512.0
-			},
-			'r': {
-				value: 0.35
-			}
-		},
-		vertexShader: /* glsl */`
+const HorizontalTiltShiftShader = {
+
+	uniforms: {
+
+		'tDiffuse': { value: null },
+		'h': { value: 1.0 / 512.0 },
+		'r': { value: 0.35 }
+
+	},
+
+	vertexShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -31,7 +27,8 @@
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 		}`,
-		fragmentShader: /* glsl */`
+
+	fragmentShader: /* glsl */`
 
 		uniform sampler2D tDiffuse;
 		uniform float h;
@@ -58,8 +55,7 @@
 			gl_FragColor = sum;
 
 		}`
-	};
 
-	THREE.HorizontalTiltShiftShader = HorizontalTiltShiftShader;
+};
 
-} )();
+export { HorizontalTiltShiftShader };

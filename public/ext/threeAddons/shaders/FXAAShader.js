@@ -1,6 +1,8 @@
-( function () {
+import {
+	Vector2
+} from 'three';
 
-	/**
+/**
  * NVIDIA FXAA by Timothy Lottes
  * https://developer.download.nvidia.com/assets/gamedev/files/sdk/11/FXAA_WhitePaper.pdf
  * - WebGL port by @supereggbert
@@ -8,16 +10,16 @@
  * Further improved by Daniel Sturk
  */
 
-	const FXAAShader = {
-		uniforms: {
-			'tDiffuse': {
-				value: null
-			},
-			'resolution': {
-				value: new THREE.Vector2( 1 / 1024, 1 / 512 )
-			}
-		},
-		vertexShader: /* glsl */`
+const FXAAShader = {
+
+	uniforms: {
+
+		'tDiffuse': { value: null },
+		'resolution': { value: new Vector2( 1 / 1024, 1 / 512 ) }
+
+	},
+
+	vertexShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -27,7 +29,8 @@
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 		}`,
-		fragmentShader: `
+
+	fragmentShader: `
 	precision highp float;
 
 	uniform sampler2D tDiffuse;
@@ -277,8 +280,7 @@
 
 	}
 	`
-	};
 
-	THREE.FXAAShader = FXAAShader;
+};
 
-} )();
+export { FXAAShader };

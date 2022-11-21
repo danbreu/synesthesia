@@ -1,170 +1,203 @@
-( function () {
+import {
+	Matrix4,
+	Object3D,
+	Vector3
+} from 'three';
 
-	class CSS2DObject extends THREE.Object3D {
+class CSS2DObject extends Object3D {
 
-		constructor( element = document.createElement( 'div' ) ) {
+	constructor( element = document.createElement( 'div' ) ) {
 
-			super();
-			this.isCSS2DObject = true;
-			this.element = element;
-			this.element.style.position = 'absolute';
-			this.element.style.userSelect = 'none';
-			this.element.setAttribute( 'draggable', false );
-			this.addEventListener( 'removed', function () {
+		super();
 
-				this.traverse( function ( object ) {
+		this.isCSS2DObject = true;
 
-					if ( object.element instanceof Element && object.element.parentNode !== null ) {
+		this.element = element;
 
-						object.element.parentNode.removeChild( object.element );
+		this.element.style.position = 'absolute';
+		this.element.style.userSelect = 'none';
 
-					}
+		this.element.setAttribute( 'draggable', false );
 
-				} );
+		this.addEventListener( 'removed', function () {
+
+			this.traverse( function ( object ) {
+
+				if ( object.element instanceof Element && object.element.parentNode !== null ) {
+
+					object.element.parentNode.removeChild( object.element );
+
+				}
 
 			} );
 
-		}
-		copy( source, recursive ) {
-
-			super.copy( source, recursive );
-			this.element = source.element.cloneNode( true );
-			return this;
-
-		}
+		} );
 
 	}
 
-	//
+	copy( source, recursive ) {
 
-	const _vector = new THREE.Vector3();
-	const _viewMatrix = new THREE.Matrix4();
-	const _viewProjectionMatrix = new THREE.Matrix4();
-	const _a = new THREE.Vector3();
-	const _b = new THREE.Vector3();
-	class CSS2DRenderer {
+		super.copy( source, recursive );
 
-		constructor( parameters = {} ) {
+		this.element = source.element.cloneNode( true );
 
-			const _this = this;
-			let _width, _height;
-			let _widthHalf, _heightHalf;
-			const cache = {
-				objects: new WeakMap()
+		return this;
+
+	}
+
+}
+
+//
+
+const _vector = new Vector3();
+const _viewMatrix = new Matrix4();
+const _viewProjectionMatrix = new Matrix4();
+const _a = new Vector3();
+const _b = new Vector3();
+
+class CSS2DRenderer {
+
+	constructor( parameters = {} ) {
+
+		const _this = this;
+
+		let _width, _height;
+		let _widthHalf, _heightHalf;
+
+		const cache = {
+			objects: new WeakMap()
+		};
+
+		const domElement = parameters.element !== undefined ? parameters.element : document.createElement( 'div' );
+
+		domElement.style.overflow = 'hidden';
+
+		this.domElement = domElement;
+
+		this.getSize = function () {
+
+			return {
+				width: _width,
+				height: _height
 			};
-			const domElement = parameters.element !== undefined ? parameters.element : document.createElement( 'div' );
-			domElement.style.overflow = 'hidden';
-			this.domElement = domElement;
-			this.getSize = function () {
 
-				return {
-					width: _width,
-					height: _height
+		};
+
+		this.render = function ( scene, camera ) {
+
+			if ( scene.matrixWorldAutoUpdate === true ) scene.updateMatrixWorld();
+			if ( camera.parent === null && camera.matrixWorldAutoUpdate === true ) camera.updateMatrixWorld();
+
+			_viewMatrix.copy( camera.matrixWorldInverse );
+			_viewProjectionMatrix.multiplyMatrices( camera.projectionMatrix, _viewMatrix );
+
+			renderObject( scene, scene, camera );
+			zOrder( scene );
+
+		};
+
+		this.setSize = function ( width, height ) {
+
+			_width = width;
+			_height = height;
+
+			_widthHalf = _width / 2;
+			_heightHalf = _height / 2;
+
+			domElement.style.width = width + 'px';
+			domElement.style.height = height + 'px';
+
+		};
+
+		function renderObject( object, scene, camera ) {
+
+			if ( object.isCSS2DObject ) {
+
+				_vector.setFromMatrixPosition( object.matrixWorld );
+				_vector.applyMatrix4( _viewProjectionMatrix );
+
+				const visible = ( object.visible === true ) && ( _vector.z >= - 1 && _vector.z <= 1 ) && ( object.layers.test( camera.layers ) === true );
+				object.element.style.display = ( visible === true ) ? '' : 'none';
+
+				if ( visible === true ) {
+
+					object.onBeforeRender( _this, scene, camera );
+
+					const element = object.element;
+
+					element.style.transform = 'translate(-50%,-50%) translate(' + ( _vector.x * _widthHalf + _widthHalf ) + 'px,' + ( - _vector.y * _heightHalf + _heightHalf ) + 'px)';
+
+					if ( element.parentNode !== domElement ) {
+
+						domElement.appendChild( element );
+
+					}
+
+					object.onAfterRender( _this, scene, camera );
+
+				}
+
+				const objectData = {
+					distanceToCameraSquared: getDistanceToSquared( camera, object )
 				};
 
-			};
-
-			this.render = function ( scene, camera ) {
-
-				if ( scene.matrixWorldAutoUpdate === true ) scene.updateMatrixWorld();
-				if ( camera.parent === null && camera.matrixWorldAutoUpdate === true ) camera.updateMatrixWorld();
-				_viewMatrix.copy( camera.matrixWorldInverse );
-				_viewProjectionMatrix.multiplyMatrices( camera.projectionMatrix, _viewMatrix );
-				renderObject( scene, scene, camera );
-				zOrder( scene );
-
-			};
-
-			this.setSize = function ( width, height ) {
-
-				_width = width;
-				_height = height;
-				_widthHalf = _width / 2;
-				_heightHalf = _height / 2;
-				domElement.style.width = width + 'px';
-				domElement.style.height = height + 'px';
-
-			};
-
-			function renderObject( object, scene, camera ) {
-
-				if ( object.isCSS2DObject ) {
-
-					_vector.setFromMatrixPosition( object.matrixWorld );
-					_vector.applyMatrix4( _viewProjectionMatrix );
-					const visible = object.visible === true && _vector.z >= - 1 && _vector.z <= 1 && object.layers.test( camera.layers ) === true;
-					object.element.style.display = visible === true ? '' : 'none';
-					if ( visible === true ) {
-
-						object.onBeforeRender( _this, scene, camera );
-						const element = object.element;
-						element.style.transform = 'translate(-50%,-50%) translate(' + ( _vector.x * _widthHalf + _widthHalf ) + 'px,' + ( - _vector.y * _heightHalf + _heightHalf ) + 'px)';
-						if ( element.parentNode !== domElement ) {
-
-							domElement.appendChild( element );
-
-						}
-
-						object.onAfterRender( _this, scene, camera );
-
-					}
-
-					const objectData = {
-						distanceToCameraSquared: getDistanceToSquared( camera, object )
-					};
-					cache.objects.set( object, objectData );
-
-				}
-
-				for ( let i = 0, l = object.children.length; i < l; i ++ ) {
-
-					renderObject( object.children[ i ], scene, camera );
-
-				}
+				cache.objects.set( object, objectData );
 
 			}
 
-			function getDistanceToSquared( object1, object2 ) {
+			for ( let i = 0, l = object.children.length; i < l; i ++ ) {
 
-				_a.setFromMatrixPosition( object1.matrixWorld );
-				_b.setFromMatrixPosition( object2.matrixWorld );
-				return _a.distanceToSquared( _b );
+				renderObject( object.children[ i ], scene, camera );
 
 			}
 
-			function filterAndFlatten( scene ) {
+		}
 
-				const result = [];
-				scene.traverse( function ( object ) {
+		function getDistanceToSquared( object1, object2 ) {
 
-					if ( object.isCSS2DObject ) result.push( object );
+			_a.setFromMatrixPosition( object1.matrixWorld );
+			_b.setFromMatrixPosition( object2.matrixWorld );
 
-				} );
-				return result;
+			return _a.distanceToSquared( _b );
 
-			}
+		}
 
-			function zOrder( scene ) {
+		function filterAndFlatten( scene ) {
 
-				const sorted = filterAndFlatten( scene ).sort( function ( a, b ) {
+			const result = [];
 
-					if ( a.renderOrder !== b.renderOrder ) {
+			scene.traverse( function ( object ) {
 
-						return b.renderOrder - a.renderOrder;
+				if ( object.isCSS2DObject ) result.push( object );
 
-					}
+			} );
 
-					const distanceA = cache.objects.get( a ).distanceToCameraSquared;
-					const distanceB = cache.objects.get( b ).distanceToCameraSquared;
-					return distanceA - distanceB;
+			return result;
 
-				} );
-				const zMax = sorted.length;
-				for ( let i = 0, l = sorted.length; i < l; i ++ ) {
+		}
 
-					sorted[ i ].element.style.zIndex = zMax - i;
+		function zOrder( scene ) {
+
+			const sorted = filterAndFlatten( scene ).sort( function ( a, b ) {
+
+				if ( a.renderOrder !== b.renderOrder ) {
+
+					return b.renderOrder - a.renderOrder;
 
 				}
+
+				const distanceA = cache.objects.get( a ).distanceToCameraSquared;
+				const distanceB = cache.objects.get( b ).distanceToCameraSquared;
+
+				return distanceA - distanceB;
+
+			} );
+
+			const zMax = sorted.length;
+
+			for ( let i = 0, l = sorted.length; i < l; i ++ ) {
+
+				sorted[ i ].element.style.zIndex = zMax - i;
 
 			}
 
@@ -172,7 +205,6 @@
 
 	}
 
-	THREE.CSS2DObject = CSS2DObject;
-	THREE.CSS2DRenderer = CSS2DRenderer;
+}
 
-} )();
+export { CSS2DObject, CSS2DRenderer };

@@ -1,6 +1,9 @@
-( function () {
+import {
+	Color,
+	Vector3
+} from 'three';
 
-	/**
+/**
  * God-rays (crepuscular rays)
  *
  * Similar implementation to the one used by Crytek for CryEngine 2 [Sousa2008].
@@ -18,13 +21,17 @@
  * Sousa2008 - Crysis Next Gen Effects, GDC2008, http://www.crytek.com/sites/default/files/GDC08_SousaT_CrysisEffects.ppt
  */
 
-	const GodRaysDepthMaskShader = {
-		uniforms: {
-			tInput: {
-				value: null
-			}
-		},
-		vertexShader: /* glsl */`
+const GodRaysDepthMaskShader = {
+
+	uniforms: {
+
+		tInput: {
+			value: null
+		}
+
+	},
+
+	vertexShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -34,7 +41,8 @@
 		 gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 	 }`,
-		fragmentShader: /* glsl */`
+
+	fragmentShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -45,9 +53,11 @@
 			gl_FragColor = vec4( 1.0 ) - texture2D( tInput, vUv );
 
 		}`
-	};
 
-	/**
+};
+
+
+/**
  * The god-ray generation shader.
  *
  * First pass:
@@ -62,19 +72,23 @@
  * decreased distance between samples.
  */
 
-	const GodRaysGenerateShader = {
-		uniforms: {
-			tInput: {
-				value: null
-			},
-			fStepSize: {
-				value: 1.0
-			},
-			vSunPositionScreenSpace: {
-				value: new THREE.Vector3()
-			}
+const GodRaysGenerateShader = {
+
+	uniforms: {
+
+		tInput: {
+			value: null
 		},
-		vertexShader: /* glsl */`
+		fStepSize: {
+			value: 1.0
+		},
+		vSunPositionScreenSpace: {
+			value: new Vector3()
+		}
+
+	},
+
+	vertexShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -84,7 +98,8 @@
 		 gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 	 }`,
-		fragmentShader: /* glsl */`
+
+	fragmentShader: /* glsl */`
 
 		#define TAPS_PER_PASS 6.0
 
@@ -169,26 +184,33 @@
 			gl_FragColor.a = 1.0;
 
 		}`
-	};
 
-	/**
+};
+
+/**
  * Additively applies god rays from texture tGodRays to a background (tColors).
  * fGodRayIntensity attenuates the god rays.
  */
 
-	const GodRaysCombineShader = {
-		uniforms: {
-			tColors: {
-				value: null
-			},
-			tGodRays: {
-				value: null
-			},
-			fGodRayIntensity: {
-				value: 0.69
-			}
+const GodRaysCombineShader = {
+
+	uniforms: {
+
+		tColors: {
+			value: null
 		},
-		vertexShader: /* glsl */`
+
+		tGodRays: {
+			value: null
+		},
+
+		fGodRayIntensity: {
+			value: 0.69
+		}
+
+	},
+
+	vertexShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -198,7 +220,8 @@
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 		}`,
-		fragmentShader: /* glsl */`
+
+	fragmentShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -217,29 +240,38 @@
 			gl_FragColor.a = 1.0;
 
 		}`
-	};
 
-	/**
+};
+
+
+/**
  * A dodgy sun/sky shader. Makes a bright spot at the sun location. Would be
  * cheaper/faster/simpler to implement this as a simple sun sprite.
  */
 
-	const GodRaysFakeSunShader = {
-		uniforms: {
-			vSunPositionScreenSpace: {
-				value: new THREE.Vector3()
-			},
-			fAspect: {
-				value: 1.0
-			},
-			sunColor: {
-				value: new THREE.Color( 0xffee00 )
-			},
-			bgColor: {
-				value: new THREE.Color( 0x000000 )
-			}
+const GodRaysFakeSunShader = {
+
+	uniforms: {
+
+		vSunPositionScreenSpace: {
+			value: new Vector3()
 		},
-		vertexShader: /* glsl */`
+
+		fAspect: {
+			value: 1.0
+		},
+
+		sunColor: {
+			value: new Color( 0xffee00 )
+		},
+
+		bgColor: {
+			value: new Color( 0x000000 )
+		}
+
+	},
+
+	vertexShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -249,7 +281,8 @@
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 		}`,
-		fragmentShader: /* glsl */`
+
+	fragmentShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -274,11 +307,7 @@
 			gl_FragColor.w = 1.0;
 
 		}`
-	};
 
-	THREE.GodRaysCombineShader = GodRaysCombineShader;
-	THREE.GodRaysDepthMaskShader = GodRaysDepthMaskShader;
-	THREE.GodRaysFakeSunShader = GodRaysFakeSunShader;
-	THREE.GodRaysGenerateShader = GodRaysGenerateShader;
+};
 
-} )();
+export { GodRaysDepthMaskShader, GodRaysGenerateShader, GodRaysCombineShader, GodRaysFakeSunShader };

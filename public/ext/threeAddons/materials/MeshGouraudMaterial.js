@@ -1,18 +1,29 @@
-( function () {
-
-	/**
+/**
  * MeshGouraudMaterial
  *
  * Lambert illumination model with Gouraud (per-vertex) shading
  *
  */
-	const GouraudShader = {
-		uniforms: THREE.UniformsUtils.merge( [ THREE.UniformsLib.common, THREE.UniformsLib.specularmap, THREE.UniformsLib.envmap, THREE.UniformsLib.aomap, THREE.UniformsLib.lightmap, THREE.UniformsLib.emissivemap, THREE.UniformsLib.fog, THREE.UniformsLib.lights, {
-			emissive: {
-				value: new THREE.Color( 0x000000 )
-			}
-		} ] ),
-		vertexShader: /* glsl */`
+
+import { UniformsUtils, UniformsLib, ShaderMaterial, Color, MultiplyOperation } from 'three';
+
+const GouraudShader = {
+
+	uniforms: UniformsUtils.merge( [
+		UniformsLib.common,
+		UniformsLib.specularmap,
+		UniformsLib.envmap,
+		UniformsLib.aomap,
+		UniformsLib.lightmap,
+		UniformsLib.emissivemap,
+		UniformsLib.fog,
+		UniformsLib.lights,
+		{
+			emissive: { value: new Color( 0x000000 ) }
+		}
+	] ),
+
+	vertexShader: /* glsl */`
 
 		#define GOURAUD
 
@@ -188,7 +199,8 @@
 			#include <fog_vertex>
 
 		}`,
-		fragmentShader: /* glsl */`
+
+	fragmentShader: /* glsl */`
 
 		#define GOURAUD
 
@@ -287,101 +299,125 @@
 			#include <dithering_fragment>
 
 		}`
-	};
 
-	//
+};
 
-	class MeshGouraudMaterial extends THREE.ShaderMaterial {
+//
 
-		constructor( parameters ) {
+class MeshGouraudMaterial extends ShaderMaterial {
 
-			super();
-			this.isMeshGouraudMaterial = true;
-			this.type = 'MeshGouraudMaterial';
+	constructor( parameters ) {
 
-			//this.color = new THREE.Color( 0xffffff ); // diffuse
+		super();
 
-			//this.map = null;
+		this.isMeshGouraudMaterial = true;
 
-			//this.lightMap = null;
-			//this.lightMapIntensity = 1.0;
+		this.type = 'MeshGouraudMaterial';
 
-			//this.aoMap = null;
-			//this.aoMapIntensity = 1.0;
+		//this.color = new THREE.Color( 0xffffff ); // diffuse
 
-			//this.emissive = new THREE.Color( 0x000000 );
-			//this.emissiveIntensity = 1.0;
-			//this.emissiveMap = null;
+		//this.map = null;
 
-			//this.specularMap = null;
+		//this.lightMap = null;
+		//this.lightMapIntensity = 1.0;
 
-			//this.alphaMap = null;
+		//this.aoMap = null;
+		//this.aoMapIntensity = 1.0;
 
-			//this.envMap = null;
-			this.combine = THREE.MultiplyOperation; // combine has no uniform
-			//this.reflectivity = 1;
-			//this.refractionRatio = 0.98;
+		//this.emissive = new THREE.Color( 0x000000 );
+		//this.emissiveIntensity = 1.0;
+		//this.emissiveMap = null;
 
-			this.fog = false; // set to use scene fog
-			this.lights = true; // set to use scene lights
-			this.clipping = false; // set to use user-defined clipping planes
+		//this.specularMap = null;
 
-			const shader = GouraudShader;
-			this.defines = Object.assign( {}, shader.defines );
-			this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
-			this.vertexShader = shader.vertexShader;
-			this.fragmentShader = shader.fragmentShader;
-			const exposePropertyNames = [ 'map', 'lightMap', 'lightMapIntensity', 'aoMap', 'aoMapIntensity', 'emissive', 'emissiveIntensity', 'emissiveMap', 'specularMap', 'alphaMap', 'envMap', 'reflectivity', 'refractionRatio', 'opacity', 'diffuse' ];
-			for ( const propertyName of exposePropertyNames ) {
+		//this.alphaMap = null;
 
-				Object.defineProperty( this, propertyName, {
-					get: function () {
+		//this.envMap = null;
+		this.combine = MultiplyOperation; // combine has no uniform
+		//this.reflectivity = 1;
+		//this.refractionRatio = 0.98;
 
-						return this.uniforms[ propertyName ].value;
+		this.fog = false; // set to use scene fog
+		this.lights = true; // set to use scene lights
+		this.clipping = false; // set to use user-defined clipping planes
 
-					},
-					set: function ( value ) {
+		const shader = GouraudShader;
 
-						this.uniforms[ propertyName ].value = value;
+		this.defines = Object.assign( {}, shader.defines );
+		this.uniforms = UniformsUtils.clone( shader.uniforms );
+		this.vertexShader = shader.vertexShader;
+		this.fragmentShader = shader.fragmentShader;
 
-					}
-				} );
+		const exposePropertyNames = [
+			'map', 'lightMap', 'lightMapIntensity', 'aoMap', 'aoMapIntensity',
+			'emissive', 'emissiveIntensity', 'emissiveMap', 'specularMap', 'alphaMap',
+			'envMap', 'reflectivity', 'refractionRatio', 'opacity', 'diffuse'
+		];
 
-			}
+		for ( const propertyName of exposePropertyNames ) {
 
-			Object.defineProperty( this, 'color', Object.getOwnPropertyDescriptor( this, 'diffuse' ) );
-			this.setValues( parameters );
+			Object.defineProperty( this, propertyName, {
 
-		}
-		copy( source ) {
+				get: function () {
 
-			super.copy( source );
-			this.color.copy( source.color );
-			this.map = source.map;
-			this.lightMap = source.lightMap;
-			this.lightMapIntensity = source.lightMapIntensity;
-			this.aoMap = source.aoMap;
-			this.aoMapIntensity = source.aoMapIntensity;
-			this.emissive.copy( source.emissive );
-			this.emissiveMap = source.emissiveMap;
-			this.emissiveIntensity = source.emissiveIntensity;
-			this.specularMap = source.specularMap;
-			this.alphaMap = source.alphaMap;
-			this.envMap = source.envMap;
-			this.combine = source.combine;
-			this.reflectivity = source.reflectivity;
-			this.refractionRatio = source.refractionRatio;
-			this.wireframe = source.wireframe;
-			this.wireframeLinewidth = source.wireframeLinewidth;
-			this.wireframeLinecap = source.wireframeLinecap;
-			this.wireframeLinejoin = source.wireframeLinejoin;
-			this.fog = source.fog;
-			return this;
+					return this.uniforms[ propertyName ].value;
+
+				},
+
+				set: function ( value ) {
+
+					this.uniforms[ propertyName ].value = value;
+
+				}
+
+			} );
 
 		}
+
+		Object.defineProperty( this, 'color', Object.getOwnPropertyDescriptor( this, 'diffuse' ) );
+
+		this.setValues( parameters );
 
 	}
 
-	THREE.MeshGouraudMaterial = MeshGouraudMaterial;
+	copy( source ) {
 
-} )();
+		super.copy( source );
+
+		this.color.copy( source.color );
+
+		this.map = source.map;
+
+		this.lightMap = source.lightMap;
+		this.lightMapIntensity = source.lightMapIntensity;
+
+		this.aoMap = source.aoMap;
+		this.aoMapIntensity = source.aoMapIntensity;
+
+		this.emissive.copy( source.emissive );
+		this.emissiveMap = source.emissiveMap;
+		this.emissiveIntensity = source.emissiveIntensity;
+
+		this.specularMap = source.specularMap;
+
+		this.alphaMap = source.alphaMap;
+
+		this.envMap = source.envMap;
+		this.combine = source.combine;
+		this.reflectivity = source.reflectivity;
+		this.refractionRatio = source.refractionRatio;
+
+		this.wireframe = source.wireframe;
+		this.wireframeLinewidth = source.wireframeLinewidth;
+		this.wireframeLinecap = source.wireframeLinecap;
+		this.wireframeLinejoin = source.wireframeLinejoin;
+
+		this.fog = source.fog;
+
+		return this;
+
+	}
+
+}
+
+export { MeshGouraudMaterial };

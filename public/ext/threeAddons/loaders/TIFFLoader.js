@@ -1,30 +1,36 @@
-( function () {
+import {
+	DataTextureLoader,
+	LinearFilter,
+	LinearMipmapLinearFilter
+} from 'three';
 
-	class TIFFLoader extends THREE.DataTextureLoader {
+import UTIF from '../libs/utif.module.js';
 
-		constructor( manager ) {
+class TIFFLoader extends DataTextureLoader {
 
-			super( manager );
+	constructor( manager ) {
 
-		}
-		parse( buffer ) {
-
-			const ifds = UTIF.decode( buffer );
-			UTIF.decodeImage( buffer, ifds[ 0 ] );
-			const rgba = UTIF.toRGBA8( ifds[ 0 ] );
-			return {
-				width: ifds[ 0 ].width,
-				height: ifds[ 0 ].height,
-				data: rgba,
-				flipY: true,
-				magFilter: THREE.LinearFilter,
-				minFilter: THREE.LinearMipmapLinearFilter
-			};
-
-		}
+		super( manager );
 
 	}
 
-	THREE.TIFFLoader = TIFFLoader;
+	parse( buffer ) {
 
-} )();
+		const ifds = UTIF.decode( buffer );
+		UTIF.decodeImage( buffer, ifds[ 0 ] );
+		const rgba = UTIF.toRGBA8( ifds[ 0 ] );
+
+		return {
+			width: ifds[ 0 ].width,
+			height: ifds[ 0 ].height,
+			data: rgba,
+			flipY: true,
+			magFilter: LinearFilter,
+			minFilter: LinearMipmapLinearFilter
+		};
+
+	}
+
+}
+
+export { TIFFLoader };

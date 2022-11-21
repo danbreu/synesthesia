@@ -1,25 +1,19 @@
-( function () {
-
-	/**
+/**
  * Blend two textures
  */
 
-	const BlendShader = {
-		uniforms: {
-			'tDiffuse1': {
-				value: null
-			},
-			'tDiffuse2': {
-				value: null
-			},
-			'mixRatio': {
-				value: 0.5
-			},
-			'opacity': {
-				value: 1.0
-			}
-		},
-		vertexShader: /* glsl */`
+const BlendShader = {
+
+	uniforms: {
+
+		'tDiffuse1': { value: null },
+		'tDiffuse2': { value: null },
+		'mixRatio': { value: 0.5 },
+		'opacity': { value: 1.0 }
+
+	},
+
+	vertexShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -29,7 +23,8 @@
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 		}`,
-		fragmentShader: /* glsl */`
+
+	fragmentShader: /* glsl */`
 
 		uniform float opacity;
 		uniform float mixRatio;
@@ -47,8 +42,7 @@
 			gl_FragColor.a *= opacity;
 
 		}`
-	};
 
-	THREE.BlendShader = BlendShader;
+};
 
-} )();
+export { BlendShader };

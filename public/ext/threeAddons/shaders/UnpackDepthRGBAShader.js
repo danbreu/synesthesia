@@ -1,20 +1,18 @@
-( function () {
-
-	/**
+/**
  * Unpack RGBA depth shader
  * - show RGBA encoded depth as monochrome color
  */
 
-	const UnpackDepthRGBAShader = {
-		uniforms: {
-			'tDiffuse': {
-				value: null
-			},
-			'opacity': {
-				value: 1.0
-			}
-		},
-		vertexShader: /* glsl */`
+const UnpackDepthRGBAShader = {
+
+	uniforms: {
+
+		'tDiffuse': { value: null },
+		'opacity': { value: 1.0 }
+
+	},
+
+	vertexShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -24,7 +22,8 @@
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 		}`,
-		fragmentShader: /* glsl */`
+
+	fragmentShader: /* glsl */`
 
 		uniform float opacity;
 
@@ -40,8 +39,7 @@
 			gl_FragColor = vec4( vec3( depth ), opacity );
 
 		}`
-	};
 
-	THREE.UnpackDepthRGBAShader = UnpackDepthRGBAShader;
+};
 
-} )();
+export { UnpackDepthRGBAShader };

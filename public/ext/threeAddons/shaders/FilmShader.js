@@ -1,6 +1,4 @@
-( function () {
-
-	/**
+/**
  * Film grain & scanlines shader
  *
  * - ported from HLSL to WebGL / GLSL
@@ -20,28 +18,20 @@
  * http://creativecommons.org/licenses/by/3.0/
  */
 
-	const FilmShader = {
-		uniforms: {
-			'tDiffuse': {
-				value: null
-			},
-			'time': {
-				value: 0.0
-			},
-			'nIntensity': {
-				value: 0.5
-			},
-			'sIntensity': {
-				value: 0.05
-			},
-			'sCount': {
-				value: 4096
-			},
-			'grayscale': {
-				value: 1
-			}
-		},
-		vertexShader: /* glsl */`
+const FilmShader = {
+
+	uniforms: {
+
+		'tDiffuse': { value: null },
+		'time': { value: 0.0 },
+		'nIntensity': { value: 0.5 },
+		'sIntensity': { value: 0.05 },
+		'sCount': { value: 4096 },
+		'grayscale': { value: 1 }
+
+	},
+
+	vertexShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -51,7 +41,8 @@
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 		}`,
-		fragmentShader: /* glsl */`
+
+	fragmentShader: /* glsl */`
 
 		#include <common>
 
@@ -102,9 +93,8 @@
 
 			gl_FragColor =  vec4( cResult, cTextureScreen.a );
 
-		}`
-	};
+		}`,
 
-	THREE.FilmShader = FilmShader;
+};
 
-} )();
+export { FilmShader };

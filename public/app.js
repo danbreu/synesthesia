@@ -2,6 +2,7 @@ import { Matrix4, Vector3, Euler, Scene, PerspectiveCamera, WebGLRenderer, Hemis
 import MusicAnalyzer from './musicAnalyzer.js'
 import { noiseBlueprint, bufferNoise, getLayeredNoise, getLayeredNoiseShader } from './noise.js'
 import { findStartingLocation, initShaderMaterial, updateChunkPosition } from './terrain.js'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import WavDecoder from './wavDecoder.js'
 
 /**

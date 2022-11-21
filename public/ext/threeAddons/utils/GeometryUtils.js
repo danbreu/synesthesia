@@ -1,6 +1,7 @@
-( function () {
+import { Vector3 } from 'three';
 
-	/**
+
+/**
  * Generates 2D-Coordinates in a very fast way.
  *
  * Based on work by:
@@ -14,25 +15,42 @@
  * @param v2         Corner index +X, +Z.
  * @param v3         Corner index +X, -Z.
  */
-	function hilbert2D( center = new THREE.Vector3( 0, 0, 0 ), size = 10, iterations = 1, v0 = 0, v1 = 1, v2 = 2, v3 = 3 ) {
+function hilbert2D( center = new Vector3( 0, 0, 0 ), size = 10, iterations = 1, v0 = 0, v1 = 1, v2 = 2, v3 = 3 ) {
 
-		const half = size / 2;
-		const vec_s = [ new THREE.Vector3( center.x - half, center.y, center.z - half ), new THREE.Vector3( center.x - half, center.y, center.z + half ), new THREE.Vector3( center.x + half, center.y, center.z + half ), new THREE.Vector3( center.x + half, center.y, center.z - half ) ];
-		const vec = [ vec_s[ v0 ], vec_s[ v1 ], vec_s[ v2 ], vec_s[ v3 ] ];
+	const half = size / 2;
 
-		// Recurse iterations
-		if ( 0 <= -- iterations ) {
+	const vec_s = [
+		new Vector3( center.x - half, center.y, center.z - half ),
+		new Vector3( center.x - half, center.y, center.z + half ),
+		new Vector3( center.x + half, center.y, center.z + half ),
+		new Vector3( center.x + half, center.y, center.z - half )
+	];
 
-			return [ ...hilbert2D( vec[ 0 ], half, iterations, v0, v3, v2, v1 ), ...hilbert2D( vec[ 1 ], half, iterations, v0, v1, v2, v3 ), ...hilbert2D( vec[ 2 ], half, iterations, v0, v1, v2, v3 ), ...hilbert2D( vec[ 3 ], half, iterations, v2, v1, v0, v3 ) ];
+	const vec = [
+		vec_s[ v0 ],
+		vec_s[ v1 ],
+		vec_s[ v2 ],
+		vec_s[ v3 ]
+	];
 
-		}
+	// Recurse iterations
+	if ( 0 <= -- iterations ) {
 
-		// Return complete Hilbert Curve.
-		return vec;
+		return [
+			...hilbert2D( vec[ 0 ], half, iterations, v0, v3, v2, v1 ),
+			...hilbert2D( vec[ 1 ], half, iterations, v0, v1, v2, v3 ),
+			...hilbert2D( vec[ 2 ], half, iterations, v0, v1, v2, v3 ),
+			...hilbert2D( vec[ 3 ], half, iterations, v2, v1, v0, v3 )
+		];
 
 	}
 
-	/**
+	// Return complete Hilbert Curve.
+	return vec;
+
+}
+
+/**
  * Generates 3D-Coordinates in a very fast way.
  *
  * Based on work by:
@@ -50,119 +68,154 @@
  * @param v6         Corner index +X, +Y, +Z.
  * @param v7         Corner index +X, +Y, -Z.
  */
-	function hilbert3D( center = new THREE.Vector3( 0, 0, 0 ), size = 10, iterations = 1, v0 = 0, v1 = 1, v2 = 2, v3 = 3, v4 = 4, v5 = 5, v6 = 6, v7 = 7 ) {
+function hilbert3D( center = new Vector3( 0, 0, 0 ), size = 10, iterations = 1, v0 = 0, v1 = 1, v2 = 2, v3 = 3, v4 = 4, v5 = 5, v6 = 6, v7 = 7 ) {
 
-		// Default Vars
-		const half = size / 2;
-		const vec_s = [ new THREE.Vector3( center.x - half, center.y + half, center.z - half ), new THREE.Vector3( center.x - half, center.y + half, center.z + half ), new THREE.Vector3( center.x - half, center.y - half, center.z + half ), new THREE.Vector3( center.x - half, center.y - half, center.z - half ), new THREE.Vector3( center.x + half, center.y - half, center.z - half ), new THREE.Vector3( center.x + half, center.y - half, center.z + half ), new THREE.Vector3( center.x + half, center.y + half, center.z + half ), new THREE.Vector3( center.x + half, center.y + half, center.z - half ) ];
-		const vec = [ vec_s[ v0 ], vec_s[ v1 ], vec_s[ v2 ], vec_s[ v3 ], vec_s[ v4 ], vec_s[ v5 ], vec_s[ v6 ], vec_s[ v7 ] ];
+	// Default Vars
+	const half = size / 2;
 
-		// Recurse iterations
-		if ( -- iterations >= 0 ) {
+	const vec_s = [
+		new Vector3( center.x - half, center.y + half, center.z - half ),
+		new Vector3( center.x - half, center.y + half, center.z + half ),
+		new Vector3( center.x - half, center.y - half, center.z + half ),
+		new Vector3( center.x - half, center.y - half, center.z - half ),
+		new Vector3( center.x + half, center.y - half, center.z - half ),
+		new Vector3( center.x + half, center.y - half, center.z + half ),
+		new Vector3( center.x + half, center.y + half, center.z + half ),
+		new Vector3( center.x + half, center.y + half, center.z - half )
+	];
 
-			return [ ...hilbert3D( vec[ 0 ], half, iterations, v0, v3, v4, v7, v6, v5, v2, v1 ), ...hilbert3D( vec[ 1 ], half, iterations, v0, v7, v6, v1, v2, v5, v4, v3 ), ...hilbert3D( vec[ 2 ], half, iterations, v0, v7, v6, v1, v2, v5, v4, v3 ), ...hilbert3D( vec[ 3 ], half, iterations, v2, v3, v0, v1, v6, v7, v4, v5 ), ...hilbert3D( vec[ 4 ], half, iterations, v2, v3, v0, v1, v6, v7, v4, v5 ), ...hilbert3D( vec[ 5 ], half, iterations, v4, v3, v2, v5, v6, v1, v0, v7 ), ...hilbert3D( vec[ 6 ], half, iterations, v4, v3, v2, v5, v6, v1, v0, v7 ), ...hilbert3D( vec[ 7 ], half, iterations, v6, v5, v2, v1, v0, v3, v4, v7 ) ];
+	const vec = [
+		vec_s[ v0 ],
+		vec_s[ v1 ],
+		vec_s[ v2 ],
+		vec_s[ v3 ],
+		vec_s[ v4 ],
+		vec_s[ v5 ],
+		vec_s[ v6 ],
+		vec_s[ v7 ]
+	];
 
-		}
+	// Recurse iterations
+	if ( -- iterations >= 0 ) {
 
-		// Return complete Hilbert Curve.
-		return vec;
+		return [
+			...hilbert3D( vec[ 0 ], half, iterations, v0, v3, v4, v7, v6, v5, v2, v1 ),
+			...hilbert3D( vec[ 1 ], half, iterations, v0, v7, v6, v1, v2, v5, v4, v3 ),
+			...hilbert3D( vec[ 2 ], half, iterations, v0, v7, v6, v1, v2, v5, v4, v3 ),
+			...hilbert3D( vec[ 3 ], half, iterations, v2, v3, v0, v1, v6, v7, v4, v5 ),
+			...hilbert3D( vec[ 4 ], half, iterations, v2, v3, v0, v1, v6, v7, v4, v5 ),
+			...hilbert3D( vec[ 5 ], half, iterations, v4, v3, v2, v5, v6, v1, v0, v7 ),
+			...hilbert3D( vec[ 6 ], half, iterations, v4, v3, v2, v5, v6, v1, v0, v7 ),
+			...hilbert3D( vec[ 7 ], half, iterations, v6, v5, v2, v1, v0, v3, v4, v7 )
+		];
 
 	}
 
-	/**
+	// Return complete Hilbert Curve.
+	return vec;
+
+}
+
+/**
  * Generates a Gosper curve (lying in the XY plane)
  *
  * https://gist.github.com/nitaku/6521802
  *
  * @param size The size of a single gosper island.
  */
-	function gosper( size = 1 ) {
+function gosper( size = 1 ) {
 
-		function fractalize( config ) {
+	function fractalize( config ) {
 
-			let output;
-			let input = config.axiom;
-			for ( let i = 0, il = config.steps; 0 <= il ? i < il : i > il; 0 <= il ? i ++ : i -- ) {
+		let output;
+		let input = config.axiom;
 
-				output = '';
-				for ( let j = 0, jl = input.length; j < jl; j ++ ) {
+		for ( let i = 0, il = config.steps; 0 <= il ? i < il : i > il; 0 <= il ? i ++ : i -- ) {
 
-					const char = input[ j ];
-					if ( char in config.rules ) {
+			output = '';
 
-						output += config.rules[ char ];
+			for ( let j = 0, jl = input.length; j < jl; j ++ ) {
 
-					} else {
+				const char = input[ j ];
 
-						output += char;
+				if ( char in config.rules ) {
 
-					}
+					output += config.rules[ char ];
 
-				}
+				} else {
 
-				input = output;
-
-			}
-
-			return output;
-
-		}
-
-		function toPoints( config ) {
-
-			let currX = 0,
-				currY = 0;
-			let angle = 0;
-			const path = [ 0, 0, 0 ];
-			const fractal = config.fractal;
-			for ( let i = 0, l = fractal.length; i < l; i ++ ) {
-
-				const char = fractal[ i ];
-				if ( char === '+' ) {
-
-					angle += config.angle;
-
-				} else if ( char === '-' ) {
-
-					angle -= config.angle;
-
-				} else if ( char === 'F' ) {
-
-					currX += config.size * Math.cos( angle );
-					currY += - config.size * Math.sin( angle );
-					path.push( currX, currY, 0 );
+					output += char;
 
 				}
 
 			}
 
-			return path;
+			input = output;
 
 		}
 
-		//
-
-		const gosper = fractalize( {
-			axiom: 'A',
-			steps: 4,
-			rules: {
-				A: 'A+BF++BF-FA--FAFA-BF+',
-				B: '-FA+BFBF++BF+FA--FA-B'
-			}
-		} );
-		const points = toPoints( {
-			fractal: gosper,
-			size: size,
-			angle: Math.PI / 3 // 60 degrees
-		} );
-
-		return points;
+		return output;
 
 	}
 
-	THREE.GeometryUtils = {};
-	THREE.GeometryUtils.gosper = gosper;
-	THREE.GeometryUtils.hilbert2D = hilbert2D;
-	THREE.GeometryUtils.hilbert3D = hilbert3D;
+	function toPoints( config ) {
 
-} )();
+		let currX = 0, currY = 0;
+		let angle = 0;
+		const path = [ 0, 0, 0 ];
+		const fractal = config.fractal;
+
+		for ( let i = 0, l = fractal.length; i < l; i ++ ) {
+
+			const char = fractal[ i ];
+
+			if ( char === '+' ) {
+
+				angle += config.angle;
+
+			} else if ( char === '-' ) {
+
+				angle -= config.angle;
+
+			} else if ( char === 'F' ) {
+
+				currX += config.size * Math.cos( angle );
+				currY += - config.size * Math.sin( angle );
+				path.push( currX, currY, 0 );
+
+			}
+
+		}
+
+		return path;
+
+	}
+
+	//
+
+	const gosper = fractalize( {
+		axiom: 'A',
+		steps: 4,
+		rules: {
+			A: 'A+BF++BF-FA--FAFA-BF+',
+			B: '-FA+BFBF++BF+FA--FA-B'
+		}
+	} );
+
+	const points = toPoints( {
+		fractal: gosper,
+		size: size,
+		angle: Math.PI / 3 // 60 degrees
+	} );
+
+	return points;
+
+}
+
+
+
+export {
+	hilbert2D,
+	hilbert3D,
+	gosper,
+};

@@ -1,24 +1,20 @@
-( function () {
-
-	/**
+/**
  * Vignette shader
  * based on PaintEffect postprocess from ro.me
  * http://code.google.com/p/3-dreams-of-black/source/browse/deploy/js/effects/PaintEffect.js
  */
 
-	const VignetteShader = {
-		uniforms: {
-			'tDiffuse': {
-				value: null
-			},
-			'offset': {
-				value: 1.0
-			},
-			'darkness': {
-				value: 1.0
-			}
-		},
-		vertexShader: /* glsl */`
+const VignetteShader = {
+
+	uniforms: {
+
+		'tDiffuse': { value: null },
+		'offset': { value: 1.0 },
+		'darkness': { value: 1.0 }
+
+	},
+
+	vertexShader: /* glsl */`
 
 		varying vec2 vUv;
 
@@ -28,7 +24,8 @@
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 		}`,
-		fragmentShader: /* glsl */`
+
+	fragmentShader: /* glsl */`
 
 		uniform float offset;
 		uniform float darkness;
@@ -46,8 +43,7 @@
 			gl_FragColor = vec4( mix( texel.rgb, vec3( 1.0 - darkness ), dot( uv, uv ) ), texel.a );
 
 		}`
-	};
 
-	THREE.VignetteShader = VignetteShader;
+};
 
-} )();
+export { VignetteShader };

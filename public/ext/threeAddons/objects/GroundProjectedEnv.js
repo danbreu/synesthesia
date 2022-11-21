@@ -1,22 +1,30 @@
-( function () {
+import { Mesh, IcosahedronGeometry, ShaderMaterial, DoubleSide } from 'three';
 
-	/**
+/**
  * Ground projected env map adapted from @react-three/drei.
  * https://github.com/pmndrs/drei/blob/master/src/core/Environment.tsx
  */
-	class GroundProjectedEnv extends THREE.Mesh {
+export class GroundProjectedEnv extends Mesh {
 
-		constructor( texture, options ) {
+	constructor( texture, options ) {
 
-			const isCubeMap = texture.isCubeTexture;
-			const w = ( isCubeMap ? texture.image[ 0 ]?.width : texture.image.width ) ?? 1024;
-			const cubeSize = w / 4;
-			const _lodMax = Math.floor( Math.log2( cubeSize ) );
-			const _cubeSize = Math.pow( 2, _lodMax );
-			const width = 3 * Math.max( _cubeSize, 16 * 7 );
-			const height = 4 * _cubeSize;
-			const defines = [ isCubeMap ? '#define ENVMAP_TYPE_CUBE' : '', `#define CUBEUV_TEXEL_WIDTH ${1.0 / width}`, `#define CUBEUV_TEXEL_HEIGHT ${1.0 / height}`, `#define CUBEUV_MAX_MIP ${_lodMax}.0` ];
-			const vertexShader = /* glsl */`
+		const isCubeMap = texture.isCubeTexture;
+		const w =
+			( isCubeMap ? texture.image[ 0 ]?.width : texture.image.width ) ?? 1024;
+		const cubeSize = w / 4;
+		const _lodMax = Math.floor( Math.log2( cubeSize ) );
+		const _cubeSize = Math.pow( 2, _lodMax );
+		const width = 3 * Math.max( _cubeSize, 16 * 7 );
+		const height = 4 * _cubeSize;
+
+		const defines = [
+			isCubeMap ? '#define ENVMAP_TYPE_CUBE' : '',
+			`#define CUBEUV_TEXEL_WIDTH ${1.0 / width}`,
+			`#define CUBEUV_TEXEL_HEIGHT ${1.0 / height}`,
+			`#define CUBEUV_MAX_MIP ${_lodMax}.0`,
+		];
+
+		const vertexShader = /* glsl */ `
         varying vec3 vWorldPosition;
 
         void main() 
@@ -29,7 +37,7 @@
 
         }
         `;
-			const fragmentShader = defines.join( '\n' ) + /* glsl */`
+		const fragmentShader = defines.join( '\n' ) + /* glsl */ `
         #define ENVMAP_TYPE_CUBE_UV
 
         varying vec3 vWorldPosition;
@@ -132,50 +140,47 @@
 
         }
         `;
-			const uniforms = {
-				map: {
-					value: texture
-				},
-				height: {
-					value: options?.height || 15
-				},
-				radius: {
-					value: options?.radius || 100
-				}
-			};
-			const geometry = new THREE.IcosahedronGeometry( 1, 16 );
-			const material = new THREE.ShaderMaterial( {
-				uniforms,
-				fragmentShader,
-				vertexShader,
-				side: THREE.DoubleSide
-			} );
-			super( geometry, material );
 
-		}
-		set radius( radius ) {
+		const uniforms = {
+			map: { value: texture },
+			height: { value: options?.height || 15 },
+			radius: { value: options?.radius || 100 },
+		};
 
-			this.material.uniforms.radius.value = radius;
+		const geometry = new IcosahedronGeometry( 1, 16 );
+		const material = new ShaderMaterial( {
+			uniforms,
+			fragmentShader,
+			vertexShader,
+			side: DoubleSide,
+		} );
 
-		}
-		get radius() {
-
-			return this.material.uniforms.radius.value;
-
-		}
-		set height( height ) {
-
-			this.material.uniforms.height.value = height;
-
-		}
-		get height() {
-
-			return this.material.uniforms.height.value;
-
-		}
+		super( geometry, material );
 
 	}
 
-	THREE.GroundProjectedEnv = GroundProjectedEnv;
+	set radius( radius ) {
 
-} )();
+		this.material.uniforms.radius.value = radius;
+
+	}
+
+	get radius() {
+
+		return this.material.uniforms.radius.value;
+
+	}
+
+	set height( height ) {
+
+		this.material.uniforms.height.value = height;
+
+	}
+
+	get height() {
+
+		return this.material.uniforms.height.value;
+
+	}
+
+}

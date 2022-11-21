@@ -1,6 +1,4 @@
-( function () {
-
-	/**
+/**
  * MMD Toon Shader
  *
  * This shader is extended from MeshPhongMaterial, and merged algorithms with
@@ -14,7 +12,10 @@
  *    (Replace lights_phong_pars_fragment with lights_mmd_toon_pars_fragment)
  *  * Add mmd_toon_matcap_fragment.
  */
-	const lights_mmd_toon_pars_fragment = /* glsl */`
+
+import { UniformsUtils, ShaderLib } from 'three';
+
+const lights_mmd_toon_pars_fragment = /* glsl */`
 varying vec3 vViewPosition;
 
 struct BlinnPhongMaterial {
@@ -47,7 +48,8 @@ void RE_IndirectDiffuse_BlinnPhong( const in vec3 irradiance, const in Geometric
 
 #define Material_LightProbeLOD( material )	(0)
 `;
-	const mmd_toon_matcap_fragment = /* glsl */`
+
+const mmd_toon_matcap_fragment = /* glsl */`
 #ifdef USE_MATCAP
 
 	vec3 viewDir = normalize( vViewPosition );
@@ -68,29 +70,54 @@ void RE_IndirectDiffuse_BlinnPhong( const in vec3 irradiance, const in Geometric
 
 #endif
 `;
-	const MMDToonShader = {
-		defines: {
-			TOON: true,
-			MATCAP: true,
-			MATCAP_BLENDING_ADD: true
-		},
-		uniforms: THREE.UniformsUtils.merge( [ THREE.ShaderLib.toon.uniforms, THREE.ShaderLib.phong.uniforms, THREE.ShaderLib.matcap.uniforms ] ),
-		vertexShader: THREE.ShaderLib.phong.vertexShader,
-		fragmentShader: THREE.ShaderLib.phong.fragmentShader.replace( '#include <common>', `
+
+const MMDToonShader = {
+
+	defines: {
+		TOON: true,
+		MATCAP: true,
+		MATCAP_BLENDING_ADD: true,
+	},
+
+	uniforms: UniformsUtils.merge( [
+		ShaderLib.toon.uniforms,
+		ShaderLib.phong.uniforms,
+		ShaderLib.matcap.uniforms,
+	] ),
+
+	vertexShader: ShaderLib.phong.vertexShader,
+
+	fragmentShader:
+		ShaderLib.phong.fragmentShader
+			.replace(
+				'#include <common>',
+				`
 					#ifdef USE_MATCAP
 						uniform sampler2D matcap;
 					#endif
 
 					#include <common>
-				` ).replace( '#include <envmap_common_pars_fragment>', `
+				`
+			)
+			.replace(
+				'#include <envmap_common_pars_fragment>',
+				`
 					#include <gradientmap_pars_fragment>
 					#include <envmap_common_pars_fragment>
-				` ).replace( '#include <lights_phong_pars_fragment>', lights_mmd_toon_pars_fragment ).replace( '#include <envmap_fragment>', `
+				`
+			)
+			.replace(
+				'#include <lights_phong_pars_fragment>',
+				lights_mmd_toon_pars_fragment
+			)
+			.replace(
+				'#include <envmap_fragment>',
+				`
 					#include <envmap_fragment>
 					${mmd_toon_matcap_fragment}
-				` )
-	};
+				`
+			),
 
-	THREE.MMDToonShader = MMDToonShader;
+};
 
-} )();
+export { MMDToonShader };
