@@ -1,7 +1,7 @@
 import * as THREE from 'three'
-import GameScreen from './game_screen.js'
+import StartScreen from './start_screen.js'
 
-const startScreen = GameScreen
+const startScreen = StartScreen
 
 /**
  * Main entry point of the application.
