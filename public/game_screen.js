@@ -18,6 +18,11 @@ class GameScreen {
 
     }
 
+    /**
+     * Initialize noise function the terrain is generated from
+     * 
+     * @returns [blueprints, fun] Noise blueprints and resulting noise function
+     */
     #initNoise() {
         const blueprints = [noiseBlueprint(new THREE.Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new THREE.Matrix4().makeTranslation(4, 4, 4), 8),
             noiseBlueprint(new THREE.Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new THREE.Matrix4().makeScale(1, 0, 1), 8)]
@@ -29,6 +34,14 @@ class GameScreen {
         return [blueprints, fun]
     }
 
+    /**
+     * Initialize the game screen
+     * 
+     * @param {*} scene 
+     * @param {*} camera 
+     * @param {*} renderer 
+     * @param {*} nextSceneCallback 
+     */
     init(scene, camera, renderer, nextSceneCallback) {
         const [noiseBlueprints, noiseFunction] = this.#initNoise()
         this.#noiseBlueprints = noiseBlueprints
@@ -59,6 +72,12 @@ class GameScreen {
         this.#composer.addPass( bloomPass )
     }
 
+    /**
+     * Animation frame
+     * 
+     * @param {*} scene 
+     * @param {*} camera 
+     */
     animate(scene, camera) {
         updateChunkPosition(scene,
 			this.#noiseBlueprints,
