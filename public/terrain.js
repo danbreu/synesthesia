@@ -66,14 +66,26 @@ export const initTerrainWorker = (scene, noiseBlueprints, setNoiseCallback) => {
 export const initShaderMaterial = (noiseBlueprints) => {
 	const shader = getLayeredNoiseShader(noiseBlueprints)
 	const uniforms = getLayeredNoiseTextures(noiseBlueprints)
+	uniforms["uPlayerPos"] = new THREE.Uniform( new THREE.Vector3(0.0, 0.0, 0.0))
+	uniforms["uBassBoomPos"] = new THREE.Uniform( new THREE.Vector3(0.0, 0.0, 0.0))
+	uniforms["uBassness"] = {type: "f", value: 0.0}
+	uniforms["uHightness"] = {type: "f", value: 0.0}
+
+
 	material = new THREE.ShaderMaterial({
 		uniforms,
 		vertexShader: `
 		precision mediump sampler3D;
 		precision mediump float;
 
+		uniform vec3 uPlayerPos;
+		uniform vec3 uBassBoomPos;
+		uniform float uBassness;
+		uniform float uHightness;
+
 		out vec3 vPos;
 		out vec3 vNormal;
+		out vec3 vPlayerPos;
 
 		${shader}
 
@@ -86,20 +98,28 @@ export const initShaderMaterial = (noiseBlueprints) => {
 		}
 
 		void main() {
-			vec4 posVec4 = vec4( position, 1.0 );
+			vec4 posVec4 = vec4( position, 1.0 ) ;
 			vec4 modelPos = modelViewMatrix * posVec4;
+			float dist = length(modelPos.xz);
+			modelPos.y -= dist*0.1;
+			if(dist>${(CHUNK_SIZE*2).toFixed(1)}) {
+				gl_Position = vec4(0.0);
+				return;
+			}
 			vPos = position;
 			vNormal = normalFromNoise(modelPos).xyz;
+			vPlayerPos = uPlayerPos;
 			gl_Position = projectionMatrix * modelPos;
 		}
 		`,
 		fragmentShader: `
 		in vec3 vPos;
 		in vec3 vNormal;
+		in vec3 vPlayerPos;
 
 		void main() {
 			vec3 objectColor = vec3(1.0, 1.0, 1.0);
-			vec3 lightPos = vec3(5.0, 10.0, 0.0);
+			vec3 lightPos = vec3(0.0, 8.0, 0.0);
 			vec3 lightColor = vec3(0.0, 1.0, 0.0);
 			float ambientStrength = 0.1;
 			vec3 ambient = ambientStrength * lightColor;
@@ -112,8 +132,16 @@ export const initShaderMaterial = (noiseBlueprints) => {
 
 			vec3 result = (ambient + diffuse) * objectColor;
 			gl_FragColor = vec4(result, 1.0);
-		} `
+		}
+		`
 	})
+
+	return {
+		playerPos: uniforms["uPlayerPos"],
+		bassBoomPos: uniforms["uBassBoomPos"],
+		bassness: uniforms["uBassness"],
+		highness: uniforms["uHightness"]
+	}
 }
 
 const createChunk = (scene, buffer, position) => {
