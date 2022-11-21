@@ -21,15 +21,17 @@ const initMusicAnalyzer = async () => {
 			}
 			return res.blob()
 		})
-	const file = new File([blob], 'madragora.mp3', { type: 'audio/wav' })
+	const file = new File([blob], 'madragora.wav', { type: 'audio/wav' })
 
 	const wavDecoder = new WavDecoder(file)
 	await wavDecoder.start()
 	const pcmData = wavDecoder.pcmData
 
 	const musicAnalyzer = new MusicAnalyzer(pcmData, wavDecoder.duration, wavDecoder.sampleRate)
+	console.log(musicAnalyzer.getFrequencySlice(56800, 0, 250))
+	console.log(musicAnalyzer.getFrequencySlice(80800, 0, 250))
+	console.log(musicAnalyzer.getFrequencySlice(80800, 8000, 20000))
 
-	console.log(musicAnalyzer.getBassness(56800))
 }
 
 const initNoise = () => {
