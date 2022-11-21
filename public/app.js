@@ -1,9 +1,11 @@
-import { Matrix4, Vector3, Euler, Scene, PerspectiveCamera, WebGLRenderer, HemisphereLight, PointLight } from 'three'
+import { Matrix4, Vector3, Vector2, Euler, Scene, PerspectiveCamera, WebGLRenderer, HemisphereLight, PointLight } from 'three'
 import MusicAnalyzer from './musicAnalyzer.js'
 import { noiseBlueprint, bufferNoise, getLayeredNoise, getLayeredNoiseShader } from './noise.js'
 import { findStartingLocation, initShaderMaterial, updateChunkPosition } from './terrain.js'
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import WavDecoder from './wavDecoder.js'
+import { EffectComposer } from './ext/threeAddons/postprocessing/EffectComposer.js'
+import { RenderPass } from './ext/threeAddons/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from './ext/threeAddons/postprocessing/UnrealBloomPass.js'
 
 /**
  * Main entry point of the application.
@@ -170,6 +172,17 @@ const initThree = () => {
 	scene.add(hemisphere)
 	camera.add(point)
 
+	const renderScene = new RenderPass( scene, camera )
+
+	const bloomPass = new UnrealBloomPass( new Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 )
+	bloomPass.threshold = 0.078
+	bloomPass.strength = 1
+	bloomPass.radius = 0.7
+
+	const composer = new EffectComposer( renderer )
+	composer.addPass( renderScene )
+	composer.addPass( bloomPass )
+
 	/**
 	 * Resize canvas and update projection matrix if the window size changed.
 	 */
@@ -198,7 +211,7 @@ const initThree = () => {
 
 		resizeCanvasToWindowSize()
 		requestAnimationFrame(animate)
-		renderer.render(scene, camera)
+		composer.render()
 	}
 
 	animate()
