@@ -17,7 +17,7 @@ let meshes = {}
 const currentPosition = new THREE.Vector3(Infinity, Infinity, Infinity)
 let material = null
 
-/* +
+/**
  * Find location reasonably far away from walls to start at
  */
 export const findStartingLocation = (noiseFunction, startX = 0, startY = 0, startZ = 0) => {
@@ -42,27 +42,14 @@ export const findStartingLocation = (noiseFunction, startX = 0, startY = 0, star
 }
 const STEP_SIZE = 0.5
 
-export const initTerrainWorker = (scene, noiseBlueprints, setNoiseCallback) => {
-	terrainWorker = new Worker('terrain_worker.js', { type: 'module' })
-
-	terrainWorker.onmessage = (message) => {
-		const [command, arg0, arg1, arg2] = message.data
-
-		switch (command) {
-		case 'doneSetNoise':
-			setNoiseCallback(terrainWorker)
-			break
-		case 'doneMarchCubes':
-			createChunk(scene, arg0, arg2)
-			break
-		}
-	}
-
-	terrainWorker.postMessage(['setNoise', noiseBlueprints])
-
-	return terrainWorker
-}
-
+/**
+ * Init the shader material used for rendering the terrain.
+ * 
+ * Contains uniforms for music amplitutes and player position.
+ * 
+ * @param {Array} noiseBlueprints 
+ * @returns 
+ */
 export const initShaderMaterial = (noiseBlueprints) => {
 	const shader = getLayeredNoiseShader(noiseBlueprints)
 	const uniforms = getLayeredNoiseTextures(noiseBlueprints)
@@ -93,6 +80,9 @@ export const initShaderMaterial = (noiseBlueprints) => {
 		out vec4 vBass;
 		out vec4 vHigh;
 
+		out float vBassness;
+		out float vHighness;
+
 		${shader}
 
 		vec4 normalFromNoise(vec4 pos) {
@@ -105,7 +95,9 @@ export const initShaderMaterial = (noiseBlueprints) => {
 
 		void main() {
 			float bassness = length(uBass)/length(vec4(255.0));
+			vBassness = bassness;
 			float highness = length(uHigh)/length(vec4(255.0));
+			vHighness = highness;
 
 			float values[7] = float[7](uBass.x, uBass.y, uBass.z, uBass.w, uHigh.x, uHigh.y, uHigh.z);
 	
@@ -128,9 +120,7 @@ export const initShaderMaterial = (noiseBlueprints) => {
 				}
 			}
 
-			if(bassness > 0.2) {
-				modelPos.y += bassness*sin(dist*bassness/512.0);
-			}
+			modelPos.y += bassness*sin(dist*bassness/64.0);
 
 			vPos = position;
 			vNormal = normalFromNoise(modelPos).xyz;
@@ -148,9 +138,10 @@ export const initShaderMaterial = (noiseBlueprints) => {
 		in vec4 vBass;
 		in vec4 vHigh;
 
-		void main() {
-			float bassness = length(vBass)/length(vec4(255.0));
+		in float vBassness;
+		in float vHighness;
 
+		void main() {
 			if(vPos.x >= 1e19 && vPos.y >= 1e19 && vPos.z >= 1e19) {
 				gl_FragColor = vec4(1.0, length(vNormal), 1.0, 1.0);
 				return;
@@ -159,7 +150,7 @@ export const initShaderMaterial = (noiseBlueprints) => {
 			vec3 objectColor = vec3(1.0, 1.0, 1.0);
 			vec3 lightPos = vec3(0.0, 8.0, 0.0);
 			vec3 lightColor = vec3(0.0, 1.0, 0.0);
-			float ambientStrength = 0.1*bassness;
+			float ambientStrength = 0.1*vBassness;
 			vec3 ambient = ambientStrength * lightColor;
 
 			// diffuse
@@ -177,6 +168,47 @@ export const initShaderMaterial = (noiseBlueprints) => {
 	return uniforms
 }
 
+/**
+ * Initialize a worker which builds the terrain defined via noiseBlueprints
+ * using the marching cubes algorithm.
+ * 
+ * If the worker finished a terrain piece it is created via the createChunk function.
+ * 
+ * @param {*} scene Scene terrain pieces are placed on
+ * @param {*} noiseBlueprints Noise blueprints defining the terrain
+ * @param {*} setNoiseCallback Called when the noise is buffered on the worker thread
+ * @returns 
+ */
+ export const initTerrainWorker = (scene, noiseBlueprints, setNoiseCallback) => {
+	terrainWorker = new Worker('terrain_worker.js', { type: 'module' })
+
+	terrainWorker.onmessage = (message) => {
+		const [command, arg0, arg1, arg2] = message.data
+
+		switch (command) {
+		case 'doneSetNoise':
+			setNoiseCallback(terrainWorker)
+			break
+		case 'doneMarchCubes':
+			createChunk(scene, arg0, arg2)
+			break
+		}
+	}
+
+	terrainWorker.postMessage(['setNoise', noiseBlueprints])
+
+	return terrainWorker
+}
+
+/**
+ * Function called when a chunk mesh is generated.
+ * 
+ * Chunks are kept track of via the meshes object.
+ * 
+ * @param {*} scene Scene chunk is placed in
+ * @param {*} buffer Buffer containing the chunk vertices coming from the caller
+ * @param {*} position Chunk position to place chunk at
+ */
 const createChunk = (scene, buffer, position) => {
 	const geometry = new THREE.BufferGeometry()
 	geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(buffer), 3))
@@ -190,6 +222,15 @@ const createChunk = (scene, buffer, position) => {
 	meshes[hashPosition(position[0], position[1], position[2])] = mesh
 }
 
+/**
+ * Update center position on chunk grid.
+ * The chunks around this center are shown. (Relative positions defined by RENDER_DIRECTIONS)
+ *  
+ * @param {*} scene Scene chunks are shown on
+ * @param {*} noiseBlueprints Noise blueprints defining the terrain
+ * @param {*} position Position in chunk coordinates floor(playerCoordinates)/CHUNK_SIZE
+ * @returns 
+ */
 export const updateChunkPosition = (scene, noiseBlueprints, position) => {
 	if (position.equals(currentPosition)) return
 
@@ -225,10 +266,16 @@ export const updateChunkPosition = (scene, noiseBlueprints, position) => {
 	})
 }
 
+/**
+ * Get the current chunk mesh at the center position
+ */
 export const getCurrentChunk = () => {
 	return meshes[hashPosition(currentPosition.x, currentPosition.y, currentPosition.z)]
 }
 
+/**
+ * Hash a position. Used for generating keys for the meshes object.
+ */
 const hashPosition = (x, y, z) => {
 	return x * 11 + y * 13 + z * 17
 }
