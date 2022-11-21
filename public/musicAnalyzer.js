@@ -71,7 +71,7 @@ class MusicAnalyzer {
 	 * To be better able to interpret the output, the highest average magnitude will be taken and mapped to 255.
 	 */
 	#createFrequencySliceMap (lowerFrequency, upperFrequency) {
-		const map = new Map
+		const map = new Map()
 		const frameCount = Math.floor(this.#duration * this.#frameRate)
 		const fft = new FFT(this.#samplesPerFrame)
 		const output = fft.createComplexArray()
@@ -134,7 +134,6 @@ class MusicAnalyzer {
 
 		return magnitude.reduce((a, b) => a + b, 0) / magnitude.length
 	}
-
 }
 
 export default MusicAnalyzer

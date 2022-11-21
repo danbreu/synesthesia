@@ -31,16 +31,15 @@ const initMusicAnalyzer = async () => {
 	console.log(musicAnalyzer.getFrequencySlice(56800, 0, 250))
 	console.log(musicAnalyzer.getFrequencySlice(80800, 0, 250))
 	console.log(musicAnalyzer.getFrequencySlice(80800, 8000, 20000))
-
 }
 
 const initNoise = () => {
-	const blueprints = [noiseBlueprint(new Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new Matrix4().makeTranslation(4,4,4), 8),
+	const blueprints = [noiseBlueprint(new Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new Matrix4().makeTranslation(4, 4, 4), 8),
 		noiseBlueprint(new Matrix4().makeScale(1, 2, 1).multiplyScalar(0.1), new Matrix4().makeScale(1, 0, 1), 8)]
 	console.log(getLayeredNoiseShader(blueprints))
 	blueprints.forEach(bufferNoise)
 	const fun = getLayeredNoise(blueprints)
-	//const start = findStartingLocation(fun, 5, 5, 5)
+	// const start = findStartingLocation(fun, 5, 5, 5)
 
 	return [blueprints, fun, null]//, start]
 }
@@ -52,11 +51,11 @@ const nextPos = (pos, dir) => {
 
 /**
  * Casts a ray from position in direction using ray marching on terrainFunction
- * 
+ *
  * @param {(x, y, z) => number} terrainFunction Geometry defined implicitly using (distanceish) scalar field
  * @param {Vector3} position Position to cast the ray from
  * @param {Vector3} direction Direction to cast the ray in
- * @param {number} noSamples Maximum amount of times the ray is advanced 
+ * @param {number} noSamples Maximum amount of times the ray is advanced
  * @param {number} isoLevel Level below which an object exist at point
  * @returns number
  */
@@ -191,10 +190,10 @@ const initThree = () => {
 				Math.floor(camera.position.y / 32),
 				Math.floor(camera.position.z / 32)))
 
-		//camera.lookAt(lookNext(noiseFunction, camera).add(camera.position))
-		//nextPos(camera.position, camera.getWorldDirection(buffer))
+		// camera.lookAt(lookNext(noiseFunction, camera).add(camera.position))
+		// nextPos(camera.position, camera.getWorldDirection(buffer))
 		camera.position.z -= 0.3
-		//camera.rotation.x -= 0.01
+		// camera.rotation.x -= 0.01
 
 		resizeCanvasToWindowSize()
 		requestAnimationFrame(animate)

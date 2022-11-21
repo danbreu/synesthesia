@@ -12,5 +12,6 @@
     "rules": {
         "indent": ["error", "tab"],
         "no-tabs": ["error", { "allowIndentationTabs": true }]
-    }
+    },
+    "ignorePatterns": ["**/ext/**/*.js"]
 }
