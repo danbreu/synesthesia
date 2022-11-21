@@ -11,7 +11,8 @@ const startScreen = StartScreen
  */
 async function main () {
 	const assetLocations = {
-		'./music/mandragora.wav': null
+		'./music/mandragora.wav': null,
+		'./assets/Crawfish.glb': null,
 	}
 	
 	await fetchAssets(assetLocations)
