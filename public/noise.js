@@ -27,28 +27,6 @@ const random = (a) => {
   * - https://developer.nvidia.com/gpugems/gpugems/part-i-natural-effects/chapter-5-implementing-improved-perlin-noise
   * - https://cs.nyu.edu/~perlin/noise/
   */
-// export const noise = (x, y = 0, z = 0) => {
-//     // Unit cube containing sample point
-//     const [ cubeX, cubeY, cubeZ ] = [x, y, z].map(Math.floor)
-
-//     // Relative position of sample point in cube
-//     x -= cubeX
-//     y -= cubeY
-//     z -= cubeZ
-
-//     // Interpolation/fade for every direction
-//     const [ u, v, w ] = [x, y, z].map(fade)
-
-//     // Interpolate between dot products of corner offset and random gradient vector
-//     return lerp(w, lerp(v, lerp(u, dotGradient(x  , y  , z   ),
-//                                    dotGradient(x-1, y  , z   )),
-//                            lerp(u, dotGradient(x  , y-1, z   ),
-//                                    dotGradient(x-1, y-1, z   ))),
-//                    lerp(v, lerp(u, dotGradient(x  , y  , z-1 ),
-//                                    dotGradient(x-1, y  , z-1 )),
-//                            lerp(u, dotGradient(x  , y-1, z-1 ),
-//                                    dotGradient(x-1, y-1, z-1 ))))
-// }
 export const noise = function (x, y, z) {
 	const floorX = Math.floor(x); const floorY = Math.floor(y); const floorZ = Math.floor(z)
 
@@ -75,15 +53,7 @@ export const noise = function (x, y, z) {
 }
 const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10)
 const lerp = (t, a, b) => a + (b - a) * t
-const dotGradient = (x, y, z) => {
-	const hash = 5 * x + 7 * y + 11 * z
-	const u = random(hash)
-	const v = random(hash + 1)
-	const w = random(hash + 2)
-	const length = Math.sqrt(u * u + v * v + w * w)
-	return (x * u + y * v + z * w) / length
-}
-var p = [151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10,
+const p = [151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10,
 	23, 190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33, 88, 237, 149, 56, 87,
 	174, 20, 125, 136, 171, 168, 68, 175, 74, 165, 71, 134, 139, 48, 27, 166, 77, 146, 158, 231, 83, 111, 229, 122, 60, 211,
 	133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244, 102, 143, 54, 65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208,
