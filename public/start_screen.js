@@ -1,8 +1,6 @@
 import * as THREE from 'three'
-import { EffectComposer } from './ext/threeAddons/postprocessing/EffectComposer.js'
-import { RenderPass } from './ext/threeAddons/postprocessing/RenderPass.js'
-import { UnrealBloomPass } from './ext/threeAddons/postprocessing/UnrealBloomPass.js'
-//import { GLTFLoader } from './ext/three/loader/GLTFLoader'
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js'
+import { MTLLoader } from 'three/addons/loaders/MTLLoader.js'
 import GameScreen from './game_screen.js'
 
 class StartScreen {
@@ -38,6 +36,22 @@ class StartScreen {
 
         const particlesGeonometry = new THREE.BufferGeometry;
         const particlesCnt = 7000;
+
+        var mtlLoader = new MTLLoader();
+        mtlLoader.setTexturePath("./assets/")
+        mtlLoader.setPath("./assets/")
+        mtlLoader.load("crayfish.mtl", function(materials){
+            materials.preload();
+
+            var objLoader = new OBJLoader()
+            objLoader.setMaterials(materials)
+            objLoader.setPath("./assets/")
+            objLoader.load("crayfish.obj", function(Object){
+                object.position.y = 0;
+                scene.add(object)
+            })
+        })
+
 
         //Array for the 3d xyz cords
         const posArray = new Float32Array(particlesCnt * 3)
@@ -78,24 +92,6 @@ class StartScreen {
 
         document.addEventListener('mousemove', (event)=>this.#animateParticales(event))
 
-        // renderer.setSize(sizes.width, sizes.height)
-        // renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-        
-
-        //const particlesGeonometry = new THREE.BufferGeometry;
-        //const particlesCnt = 5000;
-//
-        //const posArray = new Float32Array(particlesCnt * 3)
-//
-        //const renderScene = new RenderPass (scene, camera)
-        //const composer = EffectComposer (renderer)
-        //composer.addPass(renderScene)
-//
-        //loader.load()
-        //const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 )
-        //bloomPass.threshold = 0.078
-        //bloomPass.strength = 1
-        //bloomPass.radius = 0.7
     }
 
 
