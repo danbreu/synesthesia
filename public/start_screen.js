@@ -3,9 +3,10 @@ import GameScreen from './game_screen.js'
 
 class StartScreen {
     #nextScreenCallback
+    #assetLocations
 
-    constructor() {
-
+    constructor(assetLocations) {
+        this.#assetLocations = assetLocations
     }
 
     /**
@@ -27,7 +28,7 @@ class StartScreen {
      * @param {*} camera 
      */
     animate(scene, camera) {
-        this.#nextScreenCallback(new GameScreen())
+        this.#nextScreenCallback(new GameScreen(this.#assetLocations))
     }
 }
 

@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import StartScreen from './start_screen.js'
+import WavDecoder from './wavDecoder.js'
 
 const startScreen = StartScreen
 
@@ -7,12 +8,20 @@ const startScreen = StartScreen
  * Main entry point of the application.
  */
 async function main () {
-	const assetUrls = await fetchAssets([
-		'./music/madragora.wav',
-		'./assets/lightbulb.glb'
-	])
+	const assetLocations = {
+		'./music/mandragora.wav': null,
+		//'./assets/lightbulb.glb': null
+	}
+	
+	await fetchAssets(assetLocations)
 
-	const start = new startScreen()
+	const file = new File([assetLocations["./music/mandragora.wav"]], 'mandragora.wav', { type: 'audio/wav' })
+
+	const wavDecoder = new WavDecoder(file)
+	await wavDecoder.start()
+	assetLocations.wavDecoder = wavDecoder
+
+	const start = new startScreen(assetLocations)
 	initThree(start)
 }
 
@@ -25,11 +34,13 @@ async function main () {
  * @throws {TypeError} If assets is not an array
  */
 const fetchAssets = async (assets) => {
-	const assetPromises = assets.map(async (asset) => {
+	const assetPromises = Object.keys(assets).map(async (asset) => {
 		const response = await fetch(asset)
 		const blob = await response.blob()
-		return URL.createObjectURL(blob)
+		assets[asset] = blob
 	})
+
+	
 	return Promise.all(assetPromises)
 }
 
