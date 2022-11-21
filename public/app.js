@@ -177,6 +177,7 @@ const initThree = () => {
 
 	const pos = new Vector3()
 	const animate = () => {
+		if (onclick = true) {
 		updateChunkPosition(scene,
 			noiseBlueprints,
 			pos.set(Math.floor(camera.position.x / 32),
@@ -189,6 +190,7 @@ const initThree = () => {
 		resizeCanvasToWindowSize()
 		requestAnimationFrame(animate)
 		renderer.render(scene, camera)
+		}
 	}
 
 	animate()
