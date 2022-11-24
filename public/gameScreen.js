@@ -8,7 +8,6 @@ import { UnrealBloomPass } from './ext/threeAddons/postprocessing/UnrealBloomPas
 import { GLTFLoader } from './ext/threeAddons/loaders/GLTFLoader.js'
 import { OrbitControls } from './ext/threeAddons/controls/OrbitControls.js'
 import MusicAnalyzer from './musicAnalyzer.js'
-import StartScreen from './start_screen.js'
 
 class GameScreen {
 	#chunkPos = new THREE.Vector3()

@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import StartScreen from './start_screen.js'
+import StartScreen from './startScreen.js'
 import WavDecoder from './wavDecoder.js'
 
 const MILLIS_PER_FRAME = 1000 / 24

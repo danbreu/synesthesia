@@ -177,7 +177,7 @@ export const initShaderMaterial = (noiseBlueprints) => {
  * @returns
  */
 export const initTerrainWorker = (scene, noiseBlueprints, setNoiseCallback) => {
-	terrainWorker = new Worker('terrain_worker.js', { type: 'module' })
+	terrainWorker = new Worker('terrainWorker.js', { type: 'module' })
 
 	terrainWorker.onmessage = (message) => {
 		const [command, arg0, arg1, arg2] = message.data

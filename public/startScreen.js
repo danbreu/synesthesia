@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import GameScreen from './game_screen.js'
+import GameScreen from './gameScreen.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'

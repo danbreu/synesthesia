@@ -1,4 +1,4 @@
-import { marchCubes } from './marching_cubes.js'
+import { marchCubes } from './marchingCubes.js'
 import { bufferNoise, getLayeredNoise } from './noise.js'
 
 let noise = null
