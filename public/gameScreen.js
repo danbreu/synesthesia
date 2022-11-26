@@ -24,6 +24,7 @@ class GameScreen {
 	#saucer
 	#direction
 	#stars
+	#frequencyData
 
 	constructor (assetLocations) {
 		this.#assetLocations = assetLocations
@@ -44,19 +45,6 @@ class GameScreen {
 		const fun = getLayeredNoise(blueprints)
 
 		return [blueprints, fun]
-	}
-
-	/**
-     * Initialize audio player and music analyzer
-     */
-	#initSound () {
-		const wavDecoder = this.#assetLocations.wavDecoder
-		this.#musicAnalyzer = new MusicAnalyzer(wavDecoder.pcmData, wavDecoder.duration, wavDecoder.sampleRate)
-
-		const url = URL.createObjectURL(this.#assetLocations['./music/mandragora.wav'])
-		this.#audio = new Audio(url)
-		this.#audio.play()
-		this.#audio.currentTime = 26
 	}
 
 	/**
@@ -164,8 +152,7 @@ class GameScreen {
 		this.#composer.addPass(renderScene)
 		this.#composer.addPass(bloomPass)
 
-        this.#initSound(nextScreenCallback)
-        this.#audio.onended = document.location.reload
+        this.#assetLocations.audioContextAnalyzer.audioElement.play()
 
 		this.#direction = new THREE.Vector3(0, 0, 0)
 
@@ -188,16 +175,15 @@ class GameScreen {
 
 			this.#uniforms.uPlayerPos.value.copy(this.#saucer.position)
 
-			const freq = (a, b) => this.#musicAnalyzer.getFrequencySlice(this.#audio.currentTime, a, b)
 			this.#uniforms.uBass.value.set(
-				freq(16, 60),
-				freq(60, 250),
-				freq(250, 500),
-				freq(500, 2000))
+				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(16, 60),
+				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(60, 250),
+				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(250, 500),
+				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(500, 2000))
 			this.#uniforms.uHigh.value.set(
-				freq(2000, 4000),
-				freq(4000, 6000),
-				freq(6000, 20000),
+				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(2000, 4000),
+				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(4000, 6000),
+				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(6000, 12499),
 				128.0)
 
 			// View rotation
@@ -222,8 +208,8 @@ class GameScreen {
 			// Visual rotation
 			this.#saucer.rotation.y += 0.02 * delta
 
-			camera.rotation.x += (-128 + freq(16, 2000)) / 10000
-			camera.rotation.y += (-128 + freq(40, 1300)) / 10000
+			camera.rotation.x += (-128 + this.#assetLocations.audioContextAnalyzer.getFrequencySlice(16, 2000)) / 10000
+			camera.rotation.y += (-128 + this.#assetLocations.audioContextAnalyzer.getFrequencySlice(40, 1300)) / 10000
 		}
 
 		this.#composer.render()

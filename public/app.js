@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import StartScreen from './startScreen.js'
-import WavDecoder from './wavDecoder.js'
+import AudioContextAnalyzer from './audioContextAnalyzer.js'
+import { getStreamUrl } from './youtubeHelpers.js'
 
 const MILLIS_PER_FRAME = 1000 / 24
 
@@ -11,17 +12,13 @@ const startScreen = StartScreen
  */
 async function main () {
 	const assetLocations = {
-		'./music/mandragora.wav': null,
 		'./assets/Crawfish.glb': null
 	}
 
 	await fetchAssets(assetLocations)
 
-	const file = new File([assetLocations['./music/mandragora.wav']], 'mandragora.wav', { type: 'audio/wav' })
-
-	const wavDecoder = new WavDecoder(file)
-	await wavDecoder.start()
-	assetLocations.wavDecoder = wavDecoder
+	const streamUrl = await getStreamUrl(["https://pipedapi.data-niklas.de"],  "https://www.youtube.com/watch?v=1_Iaa-JuRYw")
+	assetLocations.audioContextAnalyzer = new AudioContextAnalyzer(streamUrl)
 
 	const start = new startScreen(assetLocations)
 	initThree(start)
