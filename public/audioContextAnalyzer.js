@@ -66,7 +66,7 @@ import { getLoudness, FREQUENCY_MIN, FREQUENCY_MAX } from "./ext/equalLoudness.j
         if(upperFrequency > maxFrequency) { upperFrequency = maxFrequency }
 
 		const lowerBucket = Math.floor(lowerFrequency / maxFrequency * this.#analyzer.frequencyBinCount)
-        const upperBucket = Math.floor(upperFrequency / maxFrequency * this.#analyzer.frequencyBinCount)
+        const upperBucket = Math.floor(upperFrequency / maxFrequency * this.#analyzer.frequencyBinCount) + 1
 
         // Get buckets and correct for the fact that human ears percieve different frequencies differently
         const correctedBuckets = (this.#frequencyData
@@ -75,11 +75,11 @@ import { getLoudness, FREQUENCY_MIN, FREQUENCY_MAX } from "./ext/equalLoudness.j
                 let currentFrequency = (lowerBucket + i) / this.#analyzer.frequencyBinCount * maxFrequency
                 const currentDecibel = x / 255 * 45 + 5
 
-                if (currentFrequency < FREQUENCY_MIN) { return x * 0.4 }
+                if (currentFrequency < FREQUENCY_MIN) { currentFrequency = FREQUENCY_MIN }
                 else if (currentFrequency > FREQUENCY_MAX) { currentFrequency = FREQUENCY_MAX - 1 }
 
                 const loudness = getLoudness(currentDecibel, currentFrequency)
-                return loudness < 0 ? 0 : loudness * 6
+                return loudness < 0 ? 0 : loudness * 32
             }))
 
         // Average buckets
@@ -87,29 +87,17 @@ import { getLoudness, FREQUENCY_MIN, FREQUENCY_MAX } from "./ext/equalLoudness.j
             .reduce((a, b) => a + b)
             / (upperBucket - lowerBucket))
 
-        const growthRate = 0.03
-        const fallRate = 0.1
-        const key = hashFrequencyRange(lowerFrequency, upperFrequency)
-        let historicAverage = this.#averageAmplitudes[key]
-        historicAverage = historicAverage === undefined ? 255 : historicAverage
 
-        let newAverage
-        if(average > 30) {
-            newAverage = average * growthRate + historicAverage * (1 - growthRate)
-        }
-        else {
-            newAverage = 255 * fallRate + historicAverage * (1 - fallRate)
-        }
-
-
-        this.#averageAmplitudes[key] = newAverage
-        average = average / newAverage * 255
 
         return average
 	}
 
     get audioElement () {
         return this.#audioElement
+    }
+
+    get context () {
+        return this.#context
     }
 }
 

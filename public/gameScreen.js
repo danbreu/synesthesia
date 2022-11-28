@@ -164,9 +164,9 @@ class GameScreen {
 		this.#uniforms.uPlayerPos.value.copy(this.#saucer.position)
 
 		this.#uniforms.uBass.value.set(
-			this.#audioContextAnalyzer.getFrequencySlice(16, 60),
-			this.#audioContextAnalyzer.getFrequencySlice(60, 250),
-			this.#audioContextAnalyzer.getFrequencySlice(250, 500),
+			this.#audioContextAnalyzer.getFrequencySlice(16, 60)*3,
+			this.#audioContextAnalyzer.getFrequencySlice(60, 250)*2,
+			this.#audioContextAnalyzer.getFrequencySlice(250, 500)*1.7,
 			this.#audioContextAnalyzer.getFrequencySlice(500, 2000))
 		this.#uniforms.uHigh.value.set(
 			this.#audioContextAnalyzer.getFrequencySlice(2000, 4000),
@@ -197,8 +197,8 @@ class GameScreen {
 		this.#saucer.rotation.y += 0.02 * delta
 
 		// Screen shake
-		camera.rotation.x += (-128 + this.#audioContextAnalyzer.getFrequencySlice(16, 2000)) / 10000
-		camera.rotation.y += (-128 + this.#audioContextAnalyzer.getFrequencySlice(40, 1300)) / 10000
+		camera.rotation.x += (-128 + this.#audioContextAnalyzer.getFrequencySlice(16, 2000)) * .0002
+		camera.rotation.y += (-128 + this.#audioContextAnalyzer.getFrequencySlice(40, 1300)) * .0002
 
 		this.#composer.render()
 	}
