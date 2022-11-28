@@ -68,6 +68,6 @@ a:hover {
 	}
 
 	.overlay .songTextField, .overlay .errorMessage, .overlay .infoMessage {
-		font-size: 2em;
+		font-size: 1.5em;
 	}
 }
