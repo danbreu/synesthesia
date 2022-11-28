@@ -21,7 +21,7 @@ async function main () {
 	assetLocations.audioContextAnalyzer = new AudioContextAnalyzer(streamUrl)
 
 	const start = new startScreen(assetLocations)
-	initThree(start)
+	await initThree(start)
 }
 
 /**
@@ -42,7 +42,7 @@ const fetchAssets = async (assets) => {
 	return Promise.all(assetPromises)
 }
 
-const initThree = (start) => {
+const initThree = async (start) => {
 	const canvas = document.createElement('canvas')
 	const context = canvas.getContext('webgl2', { alpha: false, antialias: true })
 	if (!context) {
@@ -55,16 +55,16 @@ const initThree = (start) => {
 	let scene = null
 	let camera = null
 	let current = null
-	const init = (screen) => {
+	const init = async (screen) => {
 		scene = new THREE.Scene()
 		camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
 		scene.add(camera)
 
-		screen.init(scene, camera, renderer, init)
+		await screen.init(scene, camera, renderer, init)
 		current = screen
 	}
 
-	init(start)
+	await init(start)
 
 	/**
 	 * Resize canvas and update projection matrix if the window size changed.
@@ -81,7 +81,7 @@ const initThree = (start) => {
 
 	let delta = MILLIS_PER_FRAME
 	let last = 0
-	const animate = () => {
+	const animate = async () => {
 		if (MILLIS_PER_FRAME > performance.now() - last) {
 			setTimeout(animate, 5)
 			return
@@ -91,13 +91,14 @@ const initThree = (start) => {
 
 		if (delta >= MILLIS_PER_FRAME) {
 			last = performance.now()
-			current.animate(scene, camera, delta, last)
+			await current.animate(scene, camera, delta, last)
 		}
 
 		requestAnimationFrame(animate)
 		resizeCanvasToWindowSize()
 	}
-	animate()
+
+	await animate()
 }
 
 window.addEventListener('DOMContentLoaded', main)

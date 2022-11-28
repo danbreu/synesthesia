@@ -30,11 +30,10 @@ class StartScreen {
      * @param {*} renderer
      * @param {*} nextScreenCallback
      */
-	init (scene, camera, renderer, nextScreenCallback) {
+	async init (scene, camera, renderer, nextScreenCallback) {
 		this.#nextScreenCallback = nextScreenCallback
 
 		// Object
-		// const geometry = new THREE.TorusGeometry( .7, .2, 200, 100 ); //ring
 		const geometrySprial = new THREE.CylinderGeometry(0.3, 1.3, 5, 75, 70)
 
 		const particlesGeonometry = new THREE.BufferGeometry()
@@ -118,7 +117,7 @@ class StartScreen {
      * @param {*} scene
      * @param {*} camera
      */
-	animate (scene, camera) {
+	 async animate (scene, camera) {
 		if (!this.#crawfish) { return }
 		if (this.#menuScene == true) {
 			this.#spiral.position.y -= 0.1
@@ -128,7 +127,7 @@ class StartScreen {
 
 				this.#crawfish.position.y += 0.1
 				if (this.#crawfish.position.y >= 3) {
-					this.#nextScreenCallback(new GameScreen(this.#assetLocations))
+					await this.#nextScreenCallback(new GameScreen(this.#assetLocations))
 				}
 			}
 		}

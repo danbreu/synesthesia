@@ -47,18 +47,6 @@ class GameScreen {
 		return [blueprints, fun]
 	}
 
-	/**
-     *
-     */
-	#initSaucer (onFinished) {
-		const loader = new GLTFLoader()
-		loader.load('./assets/saucer.glb', function (gltf) {
-			onFinished(gltf)
-		}, undefined, function (error) {
-			console.error(error)
-		})
-	}
-
 	#initStars (scene) {
 		const particlesGeonometry = new THREE.BufferGeometry()
 		const particlesCnt = 7000
@@ -93,22 +81,18 @@ class GameScreen {
      * @param {*} renderer
      * @param {*} nextScreenCallback
      */
-	init (scene, camera, renderer, nextScreenCallback) {
+	async init (scene, camera, renderer, nextScreenCallback) {
 		const [noiseBlueprints, noiseFunction] = this.#initNoise()
 		this.#noiseBlueprints = noiseBlueprints
 		this.#noiseFunction = noiseFunction
 		this.#uniforms = initShaderMaterial(noiseBlueprints)
 
-		this.#initSaucer((gltf) => {
-			gltf.scene.scale.multiplyScalar(0.01)
-			this.#saucer = gltf.scene
-			gltf.scene.position.y += 18
-			scene.add(gltf.scene)
-
-			this.#controls = new OrbitControls(camera, renderer.domElement)
-			this.#controls.enabled = false
-			this.#controls.rotate(4, 0.3)
-		})
+		const loader = new GLTFLoader()
+		const saucer = await loader.loadAsync('./assets/saucer.glb')
+		this.#saucer = saucer.scene
+		this.#saucer.scale.multiplyScalar(0.01)
+		this.#saucer.position.y = 18
+		scene.add(this.#saucer)
 
 		camera.position.x = 16
 		camera.position.y = 18
@@ -152,11 +136,16 @@ class GameScreen {
 		this.#composer.addPass(renderScene)
 		this.#composer.addPass(bloomPass)
 
+		this.#assetLocations.audioContextAnalyzer.context.resume()
         this.#assetLocations.audioContextAnalyzer.audioElement.play()
 
 		this.#direction = new THREE.Vector3(0, 0, 0)
 
 		this.#initStars(scene)
+
+		this.#controls = new OrbitControls(camera, renderer.domElement)
+		this.#controls.enabled = false
+		this.#controls.rotate(4, 0.3)
 	}
 
 	/**
@@ -165,7 +154,7 @@ class GameScreen {
      * @param {*} scene
      * @param {*} camera
      */
-	animate (scene, camera, delta, now) {
+	async animate (scene, camera, delta, now) {
 		if (this.#controls) {
 			updateChunkPosition(scene,
 				this.#noiseBlueprints,
