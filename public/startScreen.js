@@ -196,12 +196,13 @@ class StartScreen {
 
 		// Update crayfish click
 		if(inCrawfish && this.#click) {
-			this.#menuScene = true
 			this.#overlay.remove()
 
 			// Check if url is valid
 			// Run asynchronously to prevent lag in menu animation
 			;(async () => {
+				if(this.#menuScene) { return }
+
 				try {
 					await getStreamUrl(PIPED_INSTANCES,  this.#textField.value)
 				}
@@ -209,6 +210,8 @@ class StartScreen {
 					await this.#nextScreenCallback(new StartScreen(error.message))
 				}
 			})()
+
+			this.#menuScene = true
 		}
 		else {
 			this.#click = false
