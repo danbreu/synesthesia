@@ -7,14 +7,13 @@ import { RenderPass } from './ext/threeAddons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from './ext/threeAddons/postprocessing/UnrealBloomPass.js'
 import { GLTFLoader } from './ext/threeAddons/loaders/GLTFLoader.js'
 import { OrbitControls } from './ext/threeAddons/controls/OrbitControls.js'
-import MusicAnalyzer from './musicAnalyzer.js'
 
 class GameScreen {
 	#chunkPos = new THREE.Vector3()
 	#noiseBlueprints
 	#uniforms
 	#composer
-	#assetLocations
+	#audioContextAnalyzer
 	#controls
 	#angularVelocity
 	#angularAccel
@@ -22,8 +21,8 @@ class GameScreen {
 	#direction
 	#stars
 
-	constructor (assetLocations) {
-		this.#assetLocations = assetLocations
+	constructor (audioContextAnalyzer) {
+		this.#audioContextAnalyzer = audioContextAnalyzer
 	}
 
 	/**
@@ -106,6 +105,10 @@ class GameScreen {
 			}
 		})
 		document.addEventListener('keyup', (event) => {
+			if(event.key == "Escape") {
+				window.location.reload();
+			}
+
 			switch (event.code) {
 			case 'KeyA':
 			case 'KeyD':
@@ -131,8 +134,8 @@ class GameScreen {
 		this.#composer.addPass(renderScene)
 		this.#composer.addPass(bloomPass)
 
-		this.#assetLocations.audioContextAnalyzer.context.resume()
-        this.#assetLocations.audioContextAnalyzer.audioElement.play()
+		this.#audioContextAnalyzer.context.resume()
+        this.#audioContextAnalyzer.audioElement.play()
 
 		this.#direction = new THREE.Vector3(0, 0, 0)
 
@@ -161,14 +164,14 @@ class GameScreen {
 		this.#uniforms.uPlayerPos.value.copy(this.#saucer.position)
 
 		this.#uniforms.uBass.value.set(
-			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(16, 60),
-			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(60, 250),
-			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(250, 500),
-			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(500, 2000))
+			this.#audioContextAnalyzer.getFrequencySlice(16, 60),
+			this.#audioContextAnalyzer.getFrequencySlice(60, 250),
+			this.#audioContextAnalyzer.getFrequencySlice(250, 500),
+			this.#audioContextAnalyzer.getFrequencySlice(500, 2000))
 		this.#uniforms.uHigh.value.set(
-			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(2000, 4000),
-			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(4000, 6000),
-			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(6000, 12499),
+			this.#audioContextAnalyzer.getFrequencySlice(2000, 4000),
+			this.#audioContextAnalyzer.getFrequencySlice(4000, 6000),
+			this.#audioContextAnalyzer.getFrequencySlice(6000, 12499),
 			128.0)
 
 		// View rotation
@@ -194,8 +197,8 @@ class GameScreen {
 		this.#saucer.rotation.y += 0.02 * delta
 
 		// Screen shake
-		camera.rotation.x += (-128 + this.#assetLocations.audioContextAnalyzer.getFrequencySlice(16, 2000)) / 10000
-		camera.rotation.y += (-128 + this.#assetLocations.audioContextAnalyzer.getFrequencySlice(40, 1300)) / 10000
+		camera.rotation.x += (-128 + this.#audioContextAnalyzer.getFrequencySlice(16, 2000)) / 10000
+		camera.rotation.y += (-128 + this.#audioContextAnalyzer.getFrequencySlice(40, 1300)) / 10000
 
 		this.#composer.render()
 	}

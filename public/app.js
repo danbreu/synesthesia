@@ -1,7 +1,6 @@
 import * as THREE from 'three'
 import StartScreen from './startScreen.js'
-import AudioContextAnalyzer from './audioContextAnalyzer.js'
-import { getStreamUrl } from './youtubeHelpers.js'
+
 
 const MILLIS_PER_FRAME = 1000 / 24
 
@@ -11,37 +10,15 @@ const startScreen = StartScreen
  * Main entry point of the application.
  */
 async function main () {
-	const assetLocations = {
-		'./assets/Crawfish.glb': null
-	}
-
-	await fetchAssets(assetLocations)
-
-	const streamUrl = await getStreamUrl(["https://pipedapi.data-niklas.de"],  "https://www.youtube.com/watch?v=1_Iaa-JuRYw")
-	assetLocations.audioContextAnalyzer = new AudioContextAnalyzer(streamUrl)
-
-	const start = new startScreen(assetLocations)
+	const start = new startScreen()
 	await initThree(start)
 }
 
 /**
- * Fetch assets from server and create ObjectURLs
- *
- * @param {string[]} assets
- * @returns {Promise<{[key: string]: string}>} ObjectURLs
- * @throws {Error} If any asset could not be loaded
- * @throws {TypeError} If assets is not an array
+ * Initialize three js and initial screen and start render loop
+ * 
+ * @param {*} start Initial screen to start at
  */
-const fetchAssets = async (assets) => {
-	const assetPromises = Object.keys(assets).map(async (asset) => {
-		const response = await fetch(asset)
-		const blob = await response.blob()
-		assets[asset] = blob
-	})
-
-	return Promise.all(assetPromises)
-}
-
 const initThree = async (start) => {
 	const canvas = document.createElement('canvas')
 	const context = canvas.getContext('webgl2', { alpha: false, antialias: true })
@@ -55,6 +32,9 @@ const initThree = async (start) => {
 	let scene = null
 	let camera = null
 	let current = null
+	/**
+	 * Initialize screen
+	 */
 	const init = async (screen) => {
 		scene = new THREE.Scene()
 		camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
@@ -81,6 +61,9 @@ const initThree = async (start) => {
 
 	let delta = MILLIS_PER_FRAME
 	let last = 0
+	/**
+	 * Render loop
+	 */
 	const animate = async () => {
 		if (MILLIS_PER_FRAME > performance.now() - last) {
 			setTimeout(animate, 5)

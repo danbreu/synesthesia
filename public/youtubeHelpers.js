@@ -34,9 +34,11 @@ export const getInfo = async (pipedInstances, videoId) => {
     for(let i = 0; i < pipedInstances.length; i++) {
         try {
             const response = await fetch(`${pipedInstances[i]}/streams/${videoId}`)
-            return response.json()
+            return await response.json()
         }
-        catch(e) {}
+        catch(e) {
+            continue
+        }
     }
 
     throw Error(`Could not get info for video ${videoId} using piped instances ${pipedInstances}`)

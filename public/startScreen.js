@@ -4,10 +4,13 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
-import { Vector3 } from './ext/three.js'
+import AudioContextAnalyzer from './audioContextAnalyzer.js'
+import { getStreamUrl } from './youtubeHelpers.js'
+
+const PIPED_INSTANCES = ["https://pipedapi.data-niklas.de", "https://pipedapi.kavin.rocks"]
+const DEFAULT_SONG = "https://www.youtube.com/watch?v=1_Iaa-JuRYw"
 
 class StartScreen {
-	#assetLocations
 	#nextScreenCallback
 	#composer
 	#spiral
@@ -18,9 +21,14 @@ class StartScreen {
 	#crawfishBox
 	#light
 	#domElement
+	#click = false
 	#menuScene = false
-	constructor (assetLocations) {
-		this.#assetLocations = assetLocations
+	#textField
+	#overlay
+	#errorMessage
+
+	constructor (errorMessage = null) {
+		this.#errorMessage = errorMessage
 	}
 
 	/**
@@ -102,7 +110,7 @@ class StartScreen {
 			this.#setMousePos(event)
 		})
 		document.addEventListener('click', function () {
-			this.#menuScene = true
+			this.#click = true
 		}.bind(this))
 
 		// Box around crawfish in screen coordinates (used for check if crawfish was clicked)
@@ -116,6 +124,28 @@ class StartScreen {
 		this.#crawfishBox = new THREE.Box2()
 		this.#crawfishBox.min.set(viewBox.min.x, viewBox.min.y )
 		this.#crawfishBox.max.set(viewBox.max.x, viewBox.max.y )
+
+		// Overlay with text field
+		this.#overlay = document.createElement("div")
+		this.#overlay.className = "overlay"
+		this.#textField = document.createElement("input")
+		this.#textField.type = "text"
+		this.#textField.className = "songTextField"
+		this.#textField.value = DEFAULT_SONG
+		if(this.#errorMessage) {
+			const message = document.createElement("p")
+			message.className = "errorMessage"
+			message.textContent = this.#errorMessage
+			this.#overlay.appendChild(message)
+		}
+		this.#overlay.appendChild(this.#textField)
+		const message = document.createElement("ul")
+		message.className = "infoMessage"
+		message.innerHTML = `<li>Click the lobster to play youtube url</li>
+		<li>Seizure warning!</li>
+		<li><a href="https://github.com/danbreu/synesthesia">github</a></li>`
+		this.#overlay.appendChild(message)
+		document.body.appendChild(this.#overlay)
 	}
 
 	#setMousePos (event) {
@@ -139,7 +169,14 @@ class StartScreen {
 
 				this.#crawfish.position.y += 0.003 * delta
 				if (this.#crawfish.position.y >= 3) {
-					await this.#nextScreenCallback(new GameScreen(this.#assetLocations))
+					try {
+						const streamUrl = await getStreamUrl(PIPED_INSTANCES,  this.#textField.value)
+						const audioContextAnalyzer = new AudioContextAnalyzer(streamUrl) 
+						await this.#nextScreenCallback(new GameScreen(audioContextAnalyzer))
+					}
+					catch(error) {
+						await this.#nextScreenCallback(new StartScreen(error.message))
+					}
 				}
 			}
 		}
@@ -156,6 +193,26 @@ class StartScreen {
 		// Update crawfish highlight effect
 		const mousePoint = new THREE.Vector2(-1 + 2 * (this.#mouseMoveX / this.#domElement.clientWidth), -1 + 2 * (this.#mouseMoveY / this.#domElement.clientHeight))
 		const inCrawfish = this.#crawfishBox.containsPoint(mousePoint)
+
+		// Update crayfish click
+		if(inCrawfish && this.#click) {
+			this.#menuScene = true
+			this.#overlay.remove()
+
+			// Check if url is valid
+			// Run asynchronously to prevent lag in menu animation
+			;(async () => {
+				try {
+					await getStreamUrl(PIPED_INSTANCES,  this.#textField.value)
+				}
+				catch(error) {
+					await this.#nextScreenCallback(new StartScreen(error.message))
+				}
+			})()
+		}
+		else {
+			this.#click = false
+		}
 
 		// Update light
 		if(inCrawfish || this.#menuScene) {
