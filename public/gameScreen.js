@@ -12,19 +12,15 @@ import MusicAnalyzer from './musicAnalyzer.js'
 class GameScreen {
 	#chunkPos = new THREE.Vector3()
 	#noiseBlueprints
-	#noiseFunction
 	#uniforms
 	#composer
 	#assetLocations
-	#audio
-	#musicAnalyzer
 	#controls
 	#angularVelocity
 	#angularAccel
 	#saucer
 	#direction
 	#stars
-	#frequencyData
 
 	constructor (assetLocations) {
 		this.#assetLocations = assetLocations
@@ -84,7 +80,6 @@ class GameScreen {
 	async init (scene, camera, renderer, nextScreenCallback) {
 		const [noiseBlueprints, noiseFunction] = this.#initNoise()
 		this.#noiseBlueprints = noiseBlueprints
-		this.#noiseFunction = noiseFunction
 		this.#uniforms = initShaderMaterial(noiseBlueprints)
 
 		const loader = new GLTFLoader()
@@ -155,51 +150,52 @@ class GameScreen {
      * @param {*} camera
      */
 	async animate (scene, camera, delta, now) {
-		if (this.#controls) {
-			updateChunkPosition(scene,
-				this.#noiseBlueprints,
-				this.#chunkPos.set(Math.floor(this.#saucer.position.x / 32),
-					Math.floor(this.#saucer.position.y / 32),
-					Math.floor(this.#saucer.position.z / 32)))
+		// Update position the terrain is generated from
+		updateChunkPosition(scene,
+			this.#noiseBlueprints,
+			this.#chunkPos.set(Math.floor(this.#saucer.position.x / 32),
+				Math.floor(this.#saucer.position.y / 32),
+				Math.floor(this.#saucer.position.z / 32)))
 
-			this.#uniforms.uPlayerPos.value.copy(this.#saucer.position)
+		// Set uniforms for the mesh material (player position + audio spectrum)
+		this.#uniforms.uPlayerPos.value.copy(this.#saucer.position)
 
-			this.#uniforms.uBass.value.set(
-				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(16, 60),
-				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(60, 250),
-				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(250, 500),
-				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(500, 2000))
-			this.#uniforms.uHigh.value.set(
-				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(2000, 4000),
-				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(4000, 6000),
-				this.#assetLocations.audioContextAnalyzer.getFrequencySlice(6000, 12499),
-				128.0)
+		this.#uniforms.uBass.value.set(
+			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(16, 60),
+			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(60, 250),
+			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(250, 500),
+			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(500, 2000))
+		this.#uniforms.uHigh.value.set(
+			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(2000, 4000),
+			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(4000, 6000),
+			this.#assetLocations.audioContextAnalyzer.getFrequencySlice(6000, 12499),
+			128.0)
 
-			// View rotation
-			this.#controls.target = this.#saucer.position
-			this.#controls.update()
+		// View rotation
+		this.#controls.target = this.#saucer.position
+		this.#controls.update()
 
-			this.#angularVelocity += this.#angularAccel * delta
-			this.#angularVelocity *= 0.5
+		this.#angularVelocity += this.#angularAccel * delta
+		this.#angularVelocity *= 0.5
 
-			this.#controls.rotate(this.#angularVelocity * delta, 0)
+		this.#controls.rotate(this.#angularVelocity * delta, 0)
 
-			// Forward
-			this.#saucer.position.add(this.#direction)
-			camera.position.add(this.#direction)
-			this.#stars.position.add(this.#direction)
+		// Forward
+		this.#saucer.position.add(this.#direction)
+		camera.position.add(this.#direction)
+		this.#stars.position.add(this.#direction)
 
-			this.#direction.copy(camera.position).sub(this.#saucer.position)
-			this.#direction.y = 0
-			this.#direction.normalize()
-			this.#direction.multiplyScalar(-0.01 * delta)
+		this.#direction.copy(camera.position).sub(this.#saucer.position)
+		this.#direction.y = 0
+		this.#direction.normalize()
+		this.#direction.multiplyScalar(-0.01 * delta)
 
-			// Visual rotation
-			this.#saucer.rotation.y += 0.02 * delta
+		// Visual rotation
+		this.#saucer.rotation.y += 0.02 * delta
 
-			camera.rotation.x += (-128 + this.#assetLocations.audioContextAnalyzer.getFrequencySlice(16, 2000)) / 10000
-			camera.rotation.y += (-128 + this.#assetLocations.audioContextAnalyzer.getFrequencySlice(40, 1300)) / 10000
-		}
+		// Screen shake
+		camera.rotation.x += (-128 + this.#assetLocations.audioContextAnalyzer.getFrequencySlice(16, 2000)) / 10000
+		camera.rotation.y += (-128 + this.#assetLocations.audioContextAnalyzer.getFrequencySlice(40, 1300)) / 10000
 
 		this.#composer.render()
 	}
