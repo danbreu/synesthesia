@@ -117,13 +117,14 @@ class StartScreen {
 		this.#domElement = renderer.domElement
 
 		const viewBox = new THREE.Box3()
-		viewBox.setFromObject(this.#crawfish, true)
+		viewBox.min.set(-0.34, -0.08, 1)
+		viewBox.max.set(0.34, 0.16, 1)
 		viewBox.applyMatrix4(camera.matrixWorldInverse)
 		viewBox.applyMatrix4(camera.projectionMatrix)
 
 		this.#crawfishBox = new THREE.Box2()
-		this.#crawfishBox.min.set(viewBox.min.x, viewBox.min.y )
-		this.#crawfishBox.max.set(viewBox.max.x, viewBox.max.y )
+		this.#crawfishBox.min.set(viewBox.min.x, viewBox.min.y)
+		this.#crawfishBox.max.set(viewBox.max.x, viewBox.max.y)
 
 		// Overlay with text field
 		this.#overlay = document.createElement("div")
