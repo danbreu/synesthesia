@@ -117,30 +117,28 @@ class StartScreen {
      * @param {*} scene
      * @param {*} camera
      */
-	 async animate (scene, camera) {
-		if (!this.#crawfish) { return }
-		if (this.#menuScene == true) {
-			this.#spiral.position.y -= 0.1
+	 async animate (scene, camera, delta, time) {
+		this.#spiral.rotation.y += 0.004 * delta
+		if (this.#menuScene) {
+			this.#spiral.position.y -= 0.06 * delta
 
 			if (this.#spiral.position.y <= 0) {
-				this.#spiral.position.y = 0
+				this.#spiral.position.y = 0 * delta
 
-				this.#crawfish.position.y += 0.1
+				this.#crawfish.position.y += 0.003 * delta
 				if (this.#crawfish.position.y >= 3) {
 					await this.#nextScreenCallback(new GameScreen(this.#assetLocations))
 				}
 			}
 		}
 
-		const elapsedTime = this.#clock.getElapsedTime()
-
 		// Update objects
-		this.#crawfish.rotation.y = 0.5 * elapsedTime
-		this.#particlesMesh.rotation.y = -0.1 * elapsedTime
+		this.#crawfish.rotation.y = 0.0005 * time
+		this.#particlesMesh.rotation.y = -0.0001 * time
 
 		if (this.#mouseMoveX > 0) {
-			this.#particlesMesh.rotation.y = -this.#mouseMoveY * (elapsedTime * 0.00004)
-			this.#particlesMesh.rotation.x = -this.#mouseMoveX * (elapsedTime * 0.00004)
+			this.#particlesMesh.rotation.y = -this.#mouseMoveY * (time * 0.00000004)
+			this.#particlesMesh.rotation.x = -this.#mouseMoveX * (time * 0.00000004)
 		}
 
 		// Render
