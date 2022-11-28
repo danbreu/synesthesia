@@ -11,6 +11,10 @@ canvas, .overlay {
 	height: 100vh;
 }
 
+canvas {
+	z-index: 50;
+}
+
 .overlay {
 	z-index: 100;
 	display: flex;
