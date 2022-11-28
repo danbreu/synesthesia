@@ -8,7 +8,7 @@ import AudioContextAnalyzer from './audioContextAnalyzer.js'
 import { getStreamUrl } from './youtubeHelpers.js'
 
 const PIPED_INSTANCES = ["https://pipedapi.data-niklas.de", "https://pipedapi.kavin.rocks"]
-const DEFAULT_SONG = "https://www.youtube.com/watch?v=1_Iaa-JuRYw"
+const DEFAULT_SONG = "https://www.youtube.com/watch?v=OjbjZcBctuM" // Camellia - GHOST
 
 class StartScreen {
 	#nextScreenCallback
@@ -142,8 +142,7 @@ class StartScreen {
 		const message = document.createElement("ul")
 		message.className = "infoMessage"
 		message.innerHTML = `<li>Click the lobster to play youtube url</li>
-		<li>Seizure warning!</li>
-		<li><a href="https://github.com/danbreu/synesthesia">github</a></li>`
+		<li>Seizure warning!</li>`
 		this.#overlay.appendChild(message)
 		document.body.appendChild(this.#overlay)
 	}
