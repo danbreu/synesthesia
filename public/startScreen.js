@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { Vector3 } from './ext/three.js'
 
 class StartScreen {
 	#assetLocations
@@ -14,6 +15,9 @@ class StartScreen {
 	#mouseMoveX
 	#mouseMoveY
 	#crawfish
+	#crawfishBox
+	#light
+	#domElement
 	#menuScene = false
 	constructor (assetLocations) {
 		this.#assetLocations = assetLocations
@@ -49,20 +53,18 @@ class StartScreen {
 		const material = new THREE.PointsMaterial({
 			size: 0.01,
 			color: 'blue'
-		}
-		)
+		})
 
 		const particlesMaterial = new THREE.PointsMaterial({
 			size: 0.005
-		}
-		)
+		})
 
 		// load crawfish glb
 		const loader = new GLTFLoader()
 		const crawfish = await loader.loadAsync('./assets/Crawfish.glb')
 		this.#crawfish = crawfish.scene
-			this.#crawfish.scale.multiplyScalar(0.1)
-			scene.add(this.#crawfish)
+		this.#crawfish.scale.multiplyScalar(0.1)
+		scene.add(this.#crawfish)
 
 		// Mesh
 		this.#spiral = new THREE.Points(geometrySprial, material)
@@ -71,9 +73,10 @@ class StartScreen {
 		scene.add(this.#spiral)
 		scene.add(this.#particlesMesh)
 
-		const light = new THREE.PointLight(0xff0000, 1, 100)
-		light.position.set(0, 2, 2)
-		scene.add(light)
+		const skyColor = 0xFFFFFF
+		const groundColor = 0x003300
+		this.#light = new THREE.HemisphereLight(skyColor, groundColor, 0.5)
+		scene.add(this.#light)
 
 		// Camera plcement
 		camera.position.x = 0
@@ -81,7 +84,6 @@ class StartScreen {
 		camera.position.z = 2
 
 		// Mouse
-
 		this.#mouseMoveY = 0
 		this.#mouseMoveX = 0
 
@@ -96,13 +98,27 @@ class StartScreen {
 		this.#composer.addPass(renderScene)
 		this.#composer.addPass(bloomPass)
 
-		document.addEventListener('mousemove', (event) => this.#animateParticales(event))
+		document.addEventListener('mousemove', (event) => {
+			this.#setMousePos(event)
+		})
 		document.addEventListener('click', function () {
 			this.#menuScene = true
 		}.bind(this))
+
+		// Box around crawfish in screen coordinates (used for check if crawfish was clicked)
+		this.#domElement = renderer.domElement
+
+		const viewBox = new THREE.Box3()
+		viewBox.setFromObject(this.#crawfish, true)
+		viewBox.applyMatrix4(camera.matrixWorldInverse)
+		viewBox.applyMatrix4(camera.projectionMatrix)
+
+		this.#crawfishBox = new THREE.Box2()
+		this.#crawfishBox.min.set(viewBox.min.x, viewBox.min.y )
+		this.#crawfishBox.max.set(viewBox.max.x, viewBox.max.y )
 	}
 
-	#animateParticales (event) {
+	#setMousePos (event) {
 		this.#mouseMoveY = event.clientY
 		this.#mouseMoveX = event.clientX
 	}
@@ -135,6 +151,18 @@ class StartScreen {
 		if (this.#mouseMoveX > 0) {
 			this.#particlesMesh.rotation.y = -this.#mouseMoveY * (time * 0.00000004)
 			this.#particlesMesh.rotation.x = -this.#mouseMoveX * (time * 0.00000004)
+		}
+
+		// Update crawfish highlight effect
+		const mousePoint = new THREE.Vector2(-1 + 2 * (this.#mouseMoveX / this.#domElement.clientWidth), -1 + 2 * (this.#mouseMoveY / this.#domElement.clientHeight))
+		const inCrawfish = this.#crawfishBox.containsPoint(mousePoint)
+
+		// Update light
+		if(inCrawfish || this.#menuScene) {
+			this.#light.intensity = 2.2
+		}
+		else {
+			this.#light.intensity = 0.5
 		}
 
 		// Render
