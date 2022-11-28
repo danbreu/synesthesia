@@ -112,6 +112,11 @@ class StartScreen {
 		document.addEventListener('click', function () {
 			this.#click = true
 		}.bind(this))
+		document.addEventListener('keydown', (event) => {
+			if(event.key == "Enter") {
+				this.#startMenuScene()
+			}
+		})
 
 		// Box around crawfish in screen coordinates (used for check if crawfish was clicked)
 		this.#domElement = renderer.domElement
@@ -150,9 +155,36 @@ class StartScreen {
 		document.body.appendChild(this.#overlay)
 	}
 
+	/**
+	 * Callback called on mouse move
+	 * 
+	 * @param {*} event 
+	 */
 	#setMousePos (event) {
 		this.#mouseMoveY = event.clientY
 		this.#mouseMoveX = event.clientX
+	}
+
+	/**
+	 * Start the menu screne (beam crawfish up)
+	 */
+	#startMenuScene () {
+		this.#overlay.remove()
+
+		// Check if url is valid
+		// Run asynchronously to prevent lag in menu animation
+		;(async () => {
+			if(this.#menuScene) { return }
+
+			try {
+				await getStreamUrl(PIPED_INSTANCES,  this.#textField.value)
+			}
+			catch(error) {
+				await this.#nextScreenCallback(new StartScreen(error.message))
+			}
+		})()
+
+		this.#menuScene = true
 	}
 
 	/**
@@ -198,22 +230,7 @@ class StartScreen {
 
 		// Update crayfish click
 		if(inCrawfish && this.#click) {
-			this.#overlay.remove()
-
-			// Check if url is valid
-			// Run asynchronously to prevent lag in menu animation
-			;(async () => {
-				if(this.#menuScene) { return }
-
-				try {
-					await getStreamUrl(PIPED_INSTANCES,  this.#textField.value)
-				}
-				catch(error) {
-					await this.#nextScreenCallback(new StartScreen(error.message))
-				}
-			})()
-
-			this.#menuScene = true
+			this.#startMenuScene()
 		}
 		else {
 			this.#click = false
