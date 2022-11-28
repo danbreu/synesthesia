@@ -22,6 +22,7 @@ canvas {
 	justify-content: flex-end;
 	align-items: center;
 	gap: 1em;
+	text-align: center;
 }
 
 .overlay .songTextField {
@@ -37,6 +38,7 @@ canvas {
 	color: #000;
 	padding: 0.5em;
 	border-radius: 0.5em;
+	width: 90vw;
 }
 
 .overlay .infoMessage {
@@ -65,7 +67,7 @@ a:hover {
 		width: 30em;
 	}
 
-	.overlay .songTextField, .overlay .errorMessage {
+	.overlay .songTextField, .overlay .errorMessage, .overlay .infoMessage {
 		font-size: 2em;
 	}
 }

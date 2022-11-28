@@ -142,8 +142,10 @@ class StartScreen {
 		this.#overlay.appendChild(this.#textField)
 		const message = document.createElement("ul")
 		message.className = "infoMessage"
-		message.innerHTML = `<li>Click the lobster to play youtube url</li>
-		<li>Seizure warning!</li>`
+		message.innerHTML = `<li>click the crawfish to start</li>
+		<li>seizure warning</li>
+		<li><a href="https://poly.pizza/m/eIZvQyUlkAJ">crawfish</a> and <a href="https://poly.pizza/m/6hu2h8v78mO">flying saucer</a> courtesy of google (<a href="https://creativecommons.org/licenses/by/3.0/">cc by 3.0</a>)</li>
+		<li><a href="https://github.com/danbreu/synesthesia">source</a></li>`
 		this.#overlay.appendChild(message)
 		document.body.appendChild(this.#overlay)
 	}
