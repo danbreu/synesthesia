@@ -106,7 +106,7 @@ class GameScreen {
 		})
 		document.addEventListener('keyup', (event) => {
 			if(event.key == "Escape") {
-				window.location.reload();
+				window.location.reload()
 			}
 
 			switch (event.code) {
@@ -136,6 +136,7 @@ class GameScreen {
 
 		this.#audioContextAnalyzer.context.resume()
         this.#audioContextAnalyzer.audioElement.play()
+		this.#audioContextAnalyzer.audioElement.onended = () => window.location.reload()
 
 		this.#direction = new THREE.Vector3(0, 0, 0)
 
