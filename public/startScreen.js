@@ -8,9 +8,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 class StartScreen {
 	#assetLocations
 	#nextScreenCallback
-	#crawfishGlbUrl
 	#composer
-	#clock = new THREE.Clock()
 	#spiral
 	#particlesMesh
 	#mouseMoveX
@@ -19,7 +17,6 @@ class StartScreen {
 	#menuScene = false
 	constructor (assetLocations) {
 		this.#assetLocations = assetLocations
-		this.#crawfishGlbUrl = URL.createObjectURL(assetLocations['./assets/Crawfish.glb'])
 	}
 
 	/**
@@ -62,11 +59,10 @@ class StartScreen {
 
 		// load crawfish glb
 		const loader = new GLTFLoader()
-		loader.load(this.#crawfishGlbUrl, (gltf) => {
-			this.#crawfish = gltf.scene
+		const crawfish = await loader.loadAsync('./assets/Crawfish.glb')
+		this.#crawfish = crawfish.scene
 			this.#crawfish.scale.multiplyScalar(0.1)
 			scene.add(this.#crawfish)
-		})
 
 		// Mesh
 		this.#spiral = new THREE.Points(geometrySprial, material)
